@@ -667,7 +667,7 @@ const LESSONS = [
   { id: "walk", name: "The In C walk", v2: true,
     title: "Pass the figures around",
     lead: "In Terry Riley's In C, every musician plays the same short figures and moves on to the next whenever they like. Here you do the moving: pass a figure from player to player. It keeps its notes and its length, and takes on the new player's instrument.",
-    learn: ["copy a figure from one player to another", "listen to one player", "slide a figure later or earlier", "let a figure travel through the ensemble"],
+    learn: ["copy a figure from one player to another", "listen to one player", "let a figure travel through the ensemble"],
     starts: [[1, "wood", "figure A · ×1"], [2, "marimba", "figure B · ×1"], [3, "vibes", "no figure · +1 oct"], [4, "bronze", "no figure"]],
     startNote: "Two figures play. Players 3 and 4 wait.",
     steps: [
@@ -696,12 +696,7 @@ const LESSONS = [
         see: "5/4 blinks until the wheel's next flash, then stays bright.",
         hear: "The bronze plays figure A with a short rest after it, and slides through the wood and the vibes until, a few rounds later, they meet in step again.",
         touch: { chompi: "hold", "r5/4": "press" }, state: { sel: 3 }, leds: ledsPlayers(4, "5/4"), black: "ratios" },
-      { title: "Slide a copy",
-        why: "A longer length lets a copy drift by itself. You can also move one yourself: slide it later or earlier in its round, and it stays there, an echo or an answer to the others.",
-        do: "Choose player 3 ({chompi} + {w3}). Hold {loop} and turn the {wheel} slowly to the right, a few clicks.",
-        see: "While you turn, the keys show how far the figure has slid: a bar from the lowest key, the whole keyboard a whole round.",
-        hear: "The vibes play figure A a little after the wood, like an echo. To bring them back in step, hold {loop} and push the {wheel}.",
-        touch: { chompi: "hold", w3: "press", loop: "hold", wheel: "turn" }, pen: { wheel: "turn it" }, state: { sel: 2 }, leds: ledsMeter(2 / 16, null, PRESET_INK[2]), white: "", black: "" },
+      
       { title: "Move player 1 on",
         why: "In In C the musicians don't move on together. Let one start something new while the others keep the old.",
         do: "Choose player 1 ({chompi} + {w1}), play a new figure and press {loop}.",
@@ -921,12 +916,12 @@ const SHEET_CTL = [
   ["{k2}", [["turn", "brightness"], ["with CHOMPI", "feel: a looser player"]]],
   ["{k3}", [["turn", "decay"], ["with CHOMPI", "prep: the instrument's preparation"]]],
   ["{k4}", [["turn", "level"], ["with CHOMPI", "pan: left or right"]]],
-  ["{wheel}", [["turn", "octave, a step every few clicks"], ["with CHOMPI", "tempo: L0"], ["CHOMPI + push", "the tempo back to the start, 2 s"], ["with loop held", "slide the chosen player's figure, later or earlier"], ["loop held + push", "the figure back where it sat when kept (slides and drift undone)"]]],
+  ["{wheel}", [["turn", "octave, a step every few clicks"], ["with CHOMPI", "tempo: L0"], ["CHOMPI + push", "the tempo back to the start, 2 s"], ]],
   ["{play}", [["press", "start or stop everyone"], ["+ hold a white key", "listen to that player"], ["+ tap a white key", "mute or unmute that player"]]],
   ["{loop}", [["press", "keep what you just played"], ["hold 2 s", "clear the player"], ["with CHOMPI", "add to the figure"], ["with CHOMPI, hold 2 s", "clear everyone"]]],
   ["{k6}", [["turn", "volume"], ["with CHOMPI", "room"], ["hold", "how many voices sound"]]],
 ];
-const SHEET_ALL = "On <b>all</b>, K1 to K3 shift everyone's sound from where it is, K4 is everyone's level (with CHOMPI: the width), the black keys set the ensemble's tempo: every figure whole, faster or slower; loop held + push the wheel puts every figure back where it was kept.";
+const SHEET_ALL = "On <b>all</b>, K1 to K3 shift everyone's sound from where it is, K4 is everyone's level (with CHOMPI: the width), the black keys set the ensemble's tempo: every figure whole, faster or slower"  + ".";
 const SHEET_BOXES = [
   ["Lengths", `<p>Every player loops for its length times L0 (2 s at the start). A new length waits for the next L0, then the loop goes on from where it is.</p>
     <p>A length never stretches the notes. Longer adds rest in the figure's silence; shorter takes the silence away first, then silences notes, which come back when it grows again.</p>
@@ -1239,7 +1234,7 @@ const CHECK = {
     s => s.listen & 4,
     (s, c) => c[3].notes.length > 0 && sameNotes(c[3], c[2]),
     (s, c) => c[3].ratio === RATIO["5/4"] && c[3].pend < 0 && c[3].notes.length > 0,
-    (s, c, b) => c[2].notes.length > 0 && c[2].notes.length === b.c[2].notes.length && !sameNotes(c[2], b.c[2]),
+    
     (s, c, b) => c[0].notes.length > 0 && !sameNotes(c[0], b.c[0]),
   ],
   sound: [
