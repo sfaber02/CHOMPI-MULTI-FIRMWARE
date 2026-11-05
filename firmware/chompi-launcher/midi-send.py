@@ -176,7 +176,8 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("image", nargs="?", help="firmware .bin to send")
     ap.add_argument("--slot", type=int,
-                    help="slot to store it in, 1-15; replaces what is there")
+                    help="slot to store it in, 1-75 (16-30 is page 2, and so on); "
+                         "replaces what is there")
     ap.add_argument("--launcher", action="store_true",
                     help="the image is a new launcher: install it (CHOMPI restarts)")
     ap.add_argument("--stay", action="store_true",
@@ -271,6 +272,7 @@ def main():
 
     if args.list:
         need(FEATURE_LIST, "list its keys")
+        lines = []
         for slot in range(1, slots + 1):
             reply = link.call(LIST, bytes([slot]), timeout=2.0, match=for_slot(slot))
             check(reply, f"list {slot}")
@@ -279,7 +281,16 @@ def main():
             size = get7(reply[3 + n:7 + n])
             rgb = reply[7 + n:10 + n]
             colour = "  #" + "".join(f"{c << 1 | c >> 6:02X}" for c in rgb) if len(rgb) == 3 else ""
-            print(f"  key {slot:2d}: {fname} ({size} bytes){colour}" if n else f"  key {slot:2d}: -")
+            lines.append(f"  key {slot:2d}: {fname} ({size} bytes){colour}" if n else None)
+        # Pages of 15 from launcher v1.7; an older one has just the one.
+        for first in range(0, len(lines), 15):
+            page = lines[first:first + 15]
+            if slots > 15:
+                print(f" page {first // 15 + 1}:" + ("" if any(page) else " -"))
+                if not any(page):
+                    continue
+            for i, line in enumerate(page):
+                print(line or f"  key {first + i + 1:2d}: -")
 
 
 def send(link, image, name, slot, max_chunk, stay, launcher=False):

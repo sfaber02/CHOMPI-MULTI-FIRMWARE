@@ -118,7 +118,7 @@ Reply `41`:
 | status | `u7` | always `0` |
 | version | `u7` | protocol version, `1` for this document |
 | max_chunk | `u28` | most raw bytes one `DATA` may carry (2048 from launcher v1.5; 256 before). Clients may send less |
-| slots | `u7` | highest slot number accepted (currently 15) |
+| slots | `u7` | highest slot number accepted: 75 from launcher v1.7 (15 before) |
 | features | `u7` | optional, see Features. Missing on older launchers: treat as `0` |
 | launcher_version | 3 × `u7` | optional: major, minor, patch of the launcher itself. Missing on older launchers |
 
@@ -362,6 +362,11 @@ If a new launcher turns out not to work, rename `CHOMPI.old` back to
 Storing over a slot does not touch a file without a number that was sitting
 on that key: it moves to the next free key. Clients that want it gone should
 CLEAR the slot first.
+
+From v1.7 the picker has pages of 15 keys, and the slots run on across them:
+slot `n` is on page `(n - 1) / 15 + 1`, key `(n - 1) % 15 + 1`. Slots 1 – 15
+are page 1, as before. Nothing in the protocol changes; a client that shows
+the keys should lay out `slots` of them in rows of 15.
 
 ### `05` RUN
 

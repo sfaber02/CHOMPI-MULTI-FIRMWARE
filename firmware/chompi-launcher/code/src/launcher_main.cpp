@@ -46,11 +46,21 @@ using namespace chompi;
  *  directory, which is exactly why this works. */
 static const char *kFirmwareDir = "FIRMWARE";
 
-/** One per white key, which is as many as the picker can show. */
-static constexpr int kMaxSlots = 15;
+/** One firmware per white key. */
+static constexpr int kKeysPerPage = 15;
+
+/** Pages of keys, the way TAPE has banks of presets: hold the CHOMPI key and
+ *  the two lowest black keys step back and forward through them.
+ *
+ *  Slot numbers simply carry on across pages -- slot 16 is page 2, key 1 --
+ *  so the NN_ in front of a file still says exactly where it goes, and a card
+ *  from before pages (slots 1-15) is page 1 and looks as it always did. Five,
+ *  as TAPE has five banks; the two-digit prefix would allow six. */
+static constexpr int kPages    = 5;
+static constexpr int kMaxSlots = kKeysPerPage * kPages;
 
 /** White keys, left to right. These are the slot keys. */
-static const Hardware::SwId kSlotKey[kMaxSlots] = {
+static const Hardware::SwId kSlotKey[kKeysPerPage] = {
     Hardware::SwId::KEY_1,  Hardware::SwId::KEY_2,  Hardware::SwId::KEY_3,
     Hardware::SwId::KEY_4,  Hardware::SwId::KEY_5,  Hardware::SwId::KEY_6,
     Hardware::SwId::KEY_7,  Hardware::SwId::KEY_8,  Hardware::SwId::KEY_9,
@@ -59,8 +69,29 @@ static const Hardware::SwId kSlotKey[kMaxSlots] = {
 };
 
 /** The SMT LED sitting under each of those keys (from TAPE/WAVE's led_map). */
-static const int kSlotLed[kMaxSlots] = {
+static const int kSlotLed[kKeysPerPage] = {
     24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10,
+};
+
+/** Held to turn pages, as it is held for TAPE's bank select. Its LED is
+ *  PTH 0. */
+static const Hardware::SwId kChompiKey = Hardware::SwId::KEY_26;
+static constexpr int        kChompiLed = 0;
+
+/** The lowest two black keys, TAPE's JAMMI and CUBBI bank keys: previous and
+ *  next page. SMT LEDs 0 and 1. */
+static const Hardware::SwId kPageBackKey    = Hardware::SwId::KEY_16;
+static const Hardware::SwId kPageForwardKey = Hardware::SwId::KEY_17;
+static constexpr int        kPageBackLed    = 0;
+static constexpr int        kPageForwardLed = 1;
+
+/** Each page's colour, shown on the page keys: TAPE's bank colours, A to E. */
+static const float kPageColor[kPages][3] = {
+    {.58f, .05f, 1.f},  /* purple */
+    {1.f, .6f, .24f},   /* orange */
+    {.14f, 1.f, .92f},  /* teal */
+    {.77f, .38f, .06f}, /* dark orange */
+    {.706f, 1.f, 0.f},  /* yellow-green */
 };
 
 Hardware      hw;
@@ -81,6 +112,57 @@ struct Slot
 
 static Slot slots[kMaxSlots];
 static int  slot_count = 0;
+
+/** The page the picker shows, 0-based. */
+static int page = 0;
+
+/** Whether anything is on page p. */
+static bool PageUsed(int p)
+{
+    for (int k = 0; k < kKeysPerPage; k++)
+        if (slots[p * kKeysPerPage + k].size)
+            return true;
+    return false;
+}
+
+/** Whether anything is beyond page 1. A card that only fills page 1 shows
+ *  no page at all, so it looks as it did before there were pages. */
+static bool HasPages()
+{
+    for (int p = 1; p < kPages; p++)
+        if (PageUsed(p))
+            return true;
+    return false;
+}
+
+/** Step to the next page in `step`'s direction that has something on it,
+ *  wrapping round. Empty pages are skipped: there is nothing to do on one. */
+static void TurnPage(int step)
+{
+    for (int i = 1; i <= kPages; i++)
+    {
+        const int p = ((page + step * i) % kPages + kPages) % kPages;
+        if (PageUsed(p))
+        {
+            page = p;
+            return;
+        }
+    }
+}
+
+/** Off an empty page, if the card changed under it, onto the first one with
+ *  something on it. */
+static void KeepPageInUse()
+{
+    if (PageUsed(page))
+        return;
+    for (int p = 0; p < kPages; p++)
+        if (PageUsed(p))
+        {
+            page = p;
+            return;
+        }
+}
 
 MidiUpload upload;
 
@@ -300,7 +382,8 @@ static void LoadColors()
     }
 
     static FIL  f;
-    static char __attribute__((aligned(32))) text[2048];
+    /* A line is at most "NN RRGGBB " + a 63-character name + CRLF. */
+    static char __attribute__((aligned(32))) text[kMaxSlots * 80 + 256];
     UINT        got = 0;
     if (f_open(&f, kColorFile, FA_OPEN_EXISTING | FA_READ) != FR_OK)
         return;
@@ -372,10 +455,10 @@ static bool SaveColors()
     return res == FR_OK;
 }
 
-/** Put the .bin files from /FIRMWARE on keys. NN_NAME.bin goes on key NN, so
+/** Put the .bin files from /FIRMWARE on keys. NN_NAME.bin goes in slot NN, so
  *  a firmware stays on its key no matter what else is on the card -- the
- *  same slot number a USB upload names. Files without a prefix (or whose key
- *  is taken) fill the free keys in name order. */
+ *  same slot number a USB upload names. Files without a prefix (or whose slot
+ *  is taken) fill the free slots in name order, page 1 first. */
 static void ScanFirmwares(bool verbose = true)
 {
     static Slot found[2 * kMaxSlots];
@@ -478,6 +561,7 @@ static void ScanFirmwares(bool verbose = true)
         slot_count += slots[i].size ? 1 : 0;
     Log("directory walk saw %d entries, %d on keys", seen, slot_count);
     LoadColors();
+    KeepPageInUse();
 }
 
 /* Settings are each firmware's own business.
@@ -569,8 +653,8 @@ static bool LoadImage(const Slot &slot, uint32_t *out_len)
 
         /* Fill the keybed left to right as the image comes in. Without this a
            slow read and a dead unit look exactly the same from the outside. */
-        const int lit = (int)((offset * kMaxSlots) / slot.size);
-        for (int k = 0; k < kMaxSlots; k++)
+        const int lit = (int)((offset * kKeysPerPage) / slot.size);
+        for (int k = 0; k < kKeysPerPage; k++)
             SetSmtLedFloat(kSlotLed[k], k < lit ? .9f : 0.f,
                            k < lit ? .9f : 0.f, k < lit ? .9f : 0.f);
         fill_led_data();
@@ -592,8 +676,8 @@ static bool LoadImage(const Slot &slot, uint32_t *out_len)
  *  then in white as LoadImage() reads it back to start it. */
 static void DrawWriteProgress(uint32_t done, uint32_t total)
 {
-    const int lit = (int)((done * kMaxSlots) / total);
-    for (int k = 0; k < kMaxSlots; k++)
+    const int lit = (int)((done * kKeysPerPage) / total);
+    for (int k = 0; k < kKeysPerPage; k++)
         SetSmtLedFloat(kSlotLed[k], k < lit ? .9f : 0.f, k < lit ? .45f : 0.f,
                        0.f);
     fill_led_data();
@@ -865,9 +949,23 @@ static float LedLevel(uint8_t c)
     return v * v;
 }
 
-/** Every populated key breathing in its colour. Unpopulated keys stay dark,
- *  so the number of lit keys is the number of firmwares you have. */
-static void DrawPicker(uint32_t now)
+/** The page, in its colour, on the two keys that turn it: full while the
+ *  CHOMPI key is held, as TAPE lights its bank key, and faint otherwise so
+ *  it is always clear which page the keys belong to. Nothing on a card that
+ *  only fills page 1, unless you have turned off it. */
+static void DrawPageKeys(bool held)
+{
+    if (!held && page == 0 && !HasPages())
+        return;
+    const float  dim = held ? 1.f : .25f;
+    const float *c   = kPageColor[page];
+    SetSmtLedFloat(kPageBackLed, dim * c[0], dim * c[1], dim * c[2]);
+    SetSmtLedFloat(kPageForwardLed, dim * c[0], dim * c[1], dim * c[2]);
+}
+
+/** Every populated key on the page breathing in its colour. Unpopulated keys
+ *  stay dark, so the number of lit keys is the number of firmwares on it. */
+static void DrawPicker(uint32_t now, bool chompi_held)
 {
     /* ~2 s cycle, never fully dark so a slot is always readable. */
     const float phase = (float)(now % 2000) / 2000.f;
@@ -879,30 +977,40 @@ static void DrawPicker(uint32_t now)
     for (int i = 0; i < kNumPthLeds; i++)
         SetPthLed(i, 0, 0, 0);
 
-    for (int i = 0; i < kMaxSlots; i++)
-        if (slots[i].size)
-            SetSmtLedFloat(kSlotLed[i], level * LedLevel(slots[i].rgb[0]),
-                           level * LedLevel(slots[i].rgb[1]),
-                           level * LedLevel(slots[i].rgb[2]));
+    for (int k = 0; k < kKeysPerPage; k++)
+    {
+        const Slot &s = slots[page * kKeysPerPage + k];
+        if (s.size)
+            SetSmtLedFloat(kSlotLed[k], level * LedLevel(s.rgb[0]),
+                           level * LedLevel(s.rgb[1]), level * LedLevel(s.rgb[2]));
+    }
+
+    DrawPageKeys(chompi_held);
+    if (chompi_held)
+        SetPthLedFloat(kChompiLed, .67f, 0.f, 1.f); /* TAPE's, while it is held */
 
     fill_led_data();
 }
 
 /** Confirmation flash on the chosen key, in its colour, so a press always
- *  feels acknowledged even though loading is quick. */
+ *  feels acknowledged even though loading is quick. The page stays on its
+ *  keys, so a slot started over USB shows where it lives too. */
 static void FlashChoice(int index)
 {
     const uint8_t *rgb = slots[index].rgb;
+    const int      led = kSlotLed[index % kKeysPerPage];
     for (int pulse = 0; pulse < 3; pulse++)
     {
         for (int i = 0; i < kNumSmtLeds; i++)
             SetSmtLed(i, 0, 0, 0);
-        SetSmtLedFloat(kSlotLed[index], LedLevel(rgb[0]), LedLevel(rgb[1]),
-                       LedLevel(rgb[2]));
+        for (int i = 0; i < kNumPthLeds; i++)
+            SetPthLed(i, 0, 0, 0);
+        DrawPageKeys(false);
+        SetSmtLedFloat(led, LedLevel(rgb[0]), LedLevel(rgb[1]), LedLevel(rgb[2]));
         fill_led_data();
         System::Delay(60);
 
-        SetSmtLed(kSlotLed[index], 0, 0, 0);
+        SetSmtLed(led, 0, 0, 0);
         fill_led_data();
         System::Delay(60);
     }
@@ -910,8 +1018,7 @@ static void FlashChoice(int index)
     /* Leave it lit through the load. Dark would be indistinguishable from a
        dead unit, and a slow read is exactly when you most want to know the
        difference. */
-    SetSmtLedFloat(kSlotLed[index], LedLevel(rgb[0]), LedLevel(rgb[1]),
-                   LedLevel(rgb[2]));
+    SetSmtLedFloat(led, LedLevel(rgb[0]), LedLevel(rgb[1]), LedLevel(rgb[2]));
     fill_led_data();
 }
 
@@ -1069,13 +1176,13 @@ static void ShutdownPeripherals()
 static void DrawUploadProgress()
 {
     const uint32_t total = upload.Total();
-    const int lit = total ? (int)((upload.Received() * kMaxSlots) / total) : 0;
+    const int lit = total ? (int)((upload.Received() * kKeysPerPage) / total) : 0;
 
     for (int i = 0; i < kNumSmtLeds; i++)
         SetSmtLed(i, 0, 0, 0);
     for (int i = 0; i < kNumPthLeds; i++)
         SetPthLed(i, 0, 0, 0);
-    for (int k = 0; k < kMaxSlots; k++)
+    for (int k = 0; k < kKeysPerPage; k++)
         SetSmtLedFloat(kSlotLed[k], 0.f, k < lit ? .8f : .05f,
                        k < lit ? .8f : .05f);
 
@@ -1388,6 +1495,7 @@ static void ServiceUsb(uint32_t now)
     uint32_t length = 0;
 
     Log("starting slot %d -> %s", index + 1, slots[index].name);
+    page = index / kKeysPerPage; /* RUN can name a slot on any page */
     FlashChoice(index);
 
     if (!LoadImage(slots[index], &length))
@@ -1442,7 +1550,8 @@ int main(void)
     Log("scan: %d firmware(s) in /%s", slot_count, kFirmwareDir);
     for (int i = 0; i < kMaxSlots; i++)
         if (slots[i].size)
-            Log("  key %d -> %s (%lu bytes)", i + 1, slots[i].name,
+            Log("  slot %d (page %d key %d) -> %s (%lu bytes)", i + 1,
+                i / kKeysPerPage + 1, i % kKeysPerPage + 1, slots[i].name,
                 (unsigned long)slots[i].size);
 
     if (slot_count == 0)
@@ -1456,14 +1565,17 @@ int main(void)
     PickerLoop();
 }
 
-/** Light a key per firmware and start the one pressed. Keeps listening on
+/** Light a key per firmware and start the one pressed. Hold the CHOMPI key
+ *  and press the lowest two black keys to turn the page. Keeps listening on
  *  USB throughout, and follows the card as the host changes it. */
 [[noreturn]] static void PickerLoop()
 {
     /* Wait for every key to be released before arming, so that a key still held
        down from power-on does not immediately select a slot. */
-    bool     armed = false;
-    uint32_t tick  = 0;
+    bool     armed       = false;
+    bool     back_was    = false;
+    bool     forward_was = false;
+    uint32_t tick        = 0;
 
     while (true)
     {
@@ -1488,12 +1600,32 @@ int main(void)
             continue;
         }
 
-        bool any_down = false;
-        for (int i = 0; i < kMaxSlots; i++)
+        /* Pages turn on the press, while the CHOMPI key is held. Own edges
+           rather than the shift register's RisingEdge(), which only re-arms
+           once FallingEdge() has been asked. */
+        const bool chompi  = hw.button_sr.State(static_cast<int>(kChompiKey));
+        const bool back    = hw.button_sr.State(static_cast<int>(kPageBackKey));
+        const bool forward = hw.button_sr.State(static_cast<int>(kPageForwardKey));
+        if (chompi && (back && !back_was) != (forward && !forward_was))
         {
+            /* Not logged: the log keeps its earliest lines, and a lot of page
+               turning would crowd out the handover it is there to catch. */
+            const int was = page;
+            TurnPage(back && !back_was ? -1 : 1);
+            if (page != was)
+                armed = false; /* a white key held across the turn is on
+                                  another firmware now: let go of it first */
+        }
+        back_was    = back;
+        forward_was = forward;
+
+        bool any_down = false;
+        for (int k = 0; k < kKeysPerPage; k++)
+        {
+            const int i = page * kKeysPerPage + k;
             if (slots[i].size == 0)
                 continue; /* dark key */
-            if (hw.button_sr.State(static_cast<int>(kSlotKey[i])))
+            if (hw.button_sr.State(static_cast<int>(kSlotKey[k])))
             {
                 any_down = true;
                 if (armed)
@@ -1504,7 +1636,7 @@ int main(void)
         if (!any_down)
             armed = true;
 
-        DrawPicker(now);
+        DrawPicker(now, chompi);
         hw.LowBatteryLockoutCheck();
     }
 }
