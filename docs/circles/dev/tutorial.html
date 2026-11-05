@@ -1,0 +1,2047 @@
+<!doctype html>
+<html lang="en"><head><meta name="robots" content="noindex"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>
+<div style="font:12px/1.4 'Martian Mono',ui-monospace,monospace;letter-spacing:.06em;text-transform:uppercase;padding:10px 16px;background:#B5601C;color:#FFF8F2">Dev snapshot: some gestures differ in this build, <a href="index.html" style="color:inherit">see what's different</a></div>
+<title>CIRCLES Guided Start</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;400;500;600&family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;1,400&family=Martian+Mono:wght@400;500&family=Caveat:wght@600&display=swap">
+<style>
+/* Layout: the CHOMPI's own panel as the page. A slim header carries the panel's row of
+   gold-ringed LEDs as the chapter line; the introduction is an orrery of loops you can
+   play; every lesson step puts the CHOMPI on stage with a teacher's pen marks on it.
+   Light is the pink edition (salmon panel, pale yellow traces), dark the black edition
+   (black panel, gold traces). The instruments keep their LED colours in both. */
+:root {
+  --bg: #FAF4F0;        /* page */
+  --bg-2: #F3E5DE;      /* a raised surface */
+  --bg-3: #EAD4CA;
+  --ink: #241C22;       /* text, aubergine black */
+  --ink-2: #6F5F64;     /* quiet text */
+  --line: #E3CEC4;      /* hairlines */
+  --trace: #C0913F;     /* the panel's line art, as page ornament */
+  --accent: #B5601C;    /* the pen, links: the setup site's orange, deep */
+  --accent-hi: #E07F31; /* keycaps and lit LEDs */
+  --accent-ink: #1E1006;
+  --panel: #EDB8A8; --panel-line: #FBEAAE; --panel-edge: #241C22; --panel-ink: #3A2A2E;
+  --key: #FFFCF7; --key-edge: #241C22; --key-black: #241C22; --key-black-edge: #241C22;
+  --led-off: #3A2F33;
+  --core: #241C22; --core-ink: #FAF4F0;
+  --ok: #2F8A4A;
+  --is-dark: 0;
+  --f-display: "Unbounded", "Futura", "Avenir Next", system-ui, sans-serif;
+  --f-body: "Schibsted Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --f-data: "Martian Mono", "JetBrains Mono", ui-monospace, Menlo, monospace;
+  --f-pen: "Caveat", "Segoe Print", "Bradley Hand", cursive;
+}
+
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { 
+  --bg: #110F0E; --bg-2: #1B1816; --bg-3: #26211D;
+  --ink: #F2EADB; --ink-2: #A99E8C; --line: #322B25;
+  --trace: #C9A15A;
+  --accent: #F09A4E; --accent-hi: #F0974A; --accent-ink: #1B0F05;
+  --panel: #1B1816; --panel-line: #C9A15A; --panel-edge: #C9A15A; --panel-ink: #D9BD84;
+  --key: #F1EBDF; --key-edge: #000; --key-black: #0B0A09; --key-black-edge: #6B5839;
+  --led-off: #2C2723;
+  --core: #221E1A; --core-ink: #D9BD84;
+  --ok: #62C27E;
+  --is-dark: 1;
+  color-scheme: dark;
+ } }
+:root[data-theme="dark"] { 
+  --bg: #110F0E; --bg-2: #1B1816; --bg-3: #26211D;
+  --ink: #F2EADB; --ink-2: #A99E8C; --line: #322B25;
+  --trace: #C9A15A;
+  --accent: #F09A4E; --accent-hi: #F0974A; --accent-ink: #1B0F05;
+  --panel: #1B1816; --panel-line: #C9A15A; --panel-edge: #C9A15A; --panel-ink: #D9BD84;
+  --key: #F1EBDF; --key-edge: #000; --key-black: #0B0A09; --key-black-edge: #6B5839;
+  --led-off: #2C2723;
+  --core: #221E1A; --core-ink: #D9BD84;
+  --ok: #62C27E;
+  --is-dark: 1;
+  color-scheme: dark;
+ }
+
+html { background: var(--bg); overflow-x: clip; }
+body { overflow-x: clip; background: var(--bg); color: var(--ink); font: 400 17px/1.6 var(--f-body); padding-inline: 16px; padding-block: 0 64px; -webkit-font-smoothing: antialiased; }
+* { box-sizing: border-box; }
+::selection { background: color-mix(in srgb, var(--accent-hi) 35%, transparent); }
+h1, h2, h3, h4 { text-wrap: balance; }
+p, li, dd, figcaption { text-wrap: pretty; }
+a { color: var(--accent); text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2.5px solid var(--accent-hi); outline-offset: 3px; border-radius: 6px; }
+.wrap { max-width: 1240px; margin-inline: auto; display: grid; gap: 28px; }
+
+/* ---- The header: name, the LED row of chapters, the link ------------------------- */
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 25; margin-inline: -16px; padding: 10px 16px 8px;
+  background: color-mix(in srgb, var(--bg) 86%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--line); }
+.top .in { max-width: 1240px; margin: 0 auto; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px 32px; align-items: center; }
+.brand { font: 500 21px/1 var(--f-display); letter-spacing: .04em; color: var(--ink); text-decoration: none; display: flex; align-items: baseline; gap: 12px; white-space: nowrap; }
+.brand small { font: 400 10.5px var(--f-data); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); }
+@media (max-width: 1240px) { .top .in { grid-template-columns: minmax(0, 1fr) auto; } .rail { grid-column: 1 / -1; order: 3; } }
+@media (max-width: 560px) { .brand small { display: none; } }
+
+.rail { position: relative; display: flex; align-items: flex-start; min-width: 0; }
+.rail .wire { position: absolute; left: 16px; height: 1.5px; top: 13px; background: var(--trace); opacity: .7; width: calc(var(--n) * 34px - 32px); }
+.rail button { flex: none; position: relative; z-index: 1; display: grid; justify-items: center; gap: 4px; width: 34px; padding: 6px 0 2px; background: none; border: 0; cursor: pointer; }
+.rail .led { width: 14px; height: 14px; border-radius: 50%; background: var(--led-off); box-shadow: 0 0 0 2.5px var(--bg), 0 0 0 4px var(--trace); transition: background .25s, box-shadow .25s; }
+.rail .num { font: 500 10px/1 var(--f-data); color: var(--ink-2); }
+.rail button.seen .led { background: color-mix(in srgb, var(--accent-hi) 38%, var(--led-off)); }
+.rail button[aria-current="true"] .led { background: var(--accent-hi); box-shadow: 0 0 0 2.5px var(--bg), 0 0 0 4px var(--trace), 0 0 14px 3px color-mix(in srgb, var(--accent-hi) 70%, transparent); }
+.rail button[aria-current="true"] .num { color: var(--ink); }
+.rail button:hover .led { background: color-mix(in srgb, var(--accent-hi) 60%, var(--led-off)); }
+.rail button::after { content: attr(data-name); position: absolute; top: calc(100% + 6px); left: 50%; transform: translateX(-50%); white-space: nowrap;
+  font: 500 12px var(--f-body); background: var(--ink); color: var(--bg); padding: 3px 8px; border-radius: 6px; opacity: 0; pointer-events: none; transition: opacity .15s; }
+.rail button:hover::after { opacity: 1; }
+.rail-name { align-self: center; margin-left: 14px; font: 500 14.5px var(--f-body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.rail-name b { font: 500 11px var(--f-data); color: var(--ink-2); margin-right: 6px; }
+.rail .idx { align-self: center; margin-left: auto; padding: 4px 2px 4px 14px; font: 500 11px var(--f-data); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); background: none; border: 0; cursor: pointer; white-space: nowrap; }
+.rail .idx:hover { color: var(--ink); }
+.rail.boot .led { animation: chase .55s calc(var(--i) * 75ms) both; }
+@keyframes chase { 0%, 30% { background: var(--accent-hi); box-shadow: 0 0 0 2.5px var(--bg), 0 0 0 4px var(--trace), 0 0 14px 3px color-mix(in srgb, var(--accent-hi) 70%, transparent); } }
+@media (max-width: 520px) { .rail button { width: 28px; } .rail .wire { width: calc(var(--n) * 28px - 26px); left: 13px; } .rail-name { display: none; } .rail .idx { padding-left: 8px; } }
+
+.link { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px 10px; }
+.status { display: inline-flex; align-items: center; gap: 8px; font: 400 11px var(--f-data); letter-spacing: .04em; color: var(--ink-2); white-space: nowrap; }
+.status::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--led-off); box-shadow: 0 0 0 1.5px var(--trace); }
+body[data-link="on"] .status { color: var(--ink); }
+body[data-link="on"] .status::before { background: #4cb85c; box-shadow: 0 0 0 1.5px var(--trace), 0 0 9px 2px rgb(76 184 92 / .6); }
+.load { font: 400 11px var(--f-data); color: var(--ink-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.load[data-level="mid"] { color: #b07a10; }
+.load[data-level="high"] { color: #c2410c; font-weight: 500; }
+body:not([data-link="on"]) .load { display: none; }
+
+/* ---- Keycaps: every button is a CHOMPI key ----------------------------------------- */
+.kc { display: inline-flex; align-items: center; justify-content: center; gap: 10px; font: 500 15px/1.2 var(--f-body); color: #241C22;
+  background: var(--key); border: 1.5px solid var(--key-edge); border-radius: 10px; padding: 9px 16px 8px; cursor: pointer;
+  box-shadow: 0 3px 0 var(--key-edge); transition: transform .07s, box-shadow .07s, filter .15s; text-decoration: none; white-space: nowrap; }
+.kc:hover { filter: brightness(1.04); }
+.kc:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--key-edge); }
+.kc.primary { background: var(--accent-hi); color: var(--accent-ink); }
+.kc.play { background: #3fa8a2; }
+.kc.small { font-size: 13px; padding: 6px 11px 5px; border-radius: 8px; box-shadow: 0 2px 0 var(--key-edge); }
+.kc.big { font-size: 17px; padding: 12px 22px 11px; }
+.kc .ico { width: 14px; height: 14px; flex: none; }
+.quiet { background: none; border: 0; padding: 6px 0; cursor: pointer; color: var(--ink-2); font: 500 15px var(--f-body); text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
+.quiet:hover { color: var(--ink); }
+
+.ar { display: inline-block; width: 1em; height: .8em; vertical-align: -.04em; background: currentColor; transition: transform .15s;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 12'%3E%3Cpath d='M1 6h13M9 1l5 5-5 5' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 12'%3E%3Cpath d='M1 6h13M9 1l5 5-5 5' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat; }
+.ar.bk { transform: scaleX(-1); }
+.kc:hover .ar:not(.bk) { transform: translateX(3px); }
+.quiet:hover .ar.bk { transform: scaleX(-1) translateX(3px); }
+
+/* ---- Type --------------------------------------------------------------------------- */
+.kicker { margin: 0 0 12px; display: flex; align-items: center; gap: 10px; font: 500 11px/1.3 var(--f-data); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-2); }
+.kicker::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--accent-hi); box-shadow: 0 0 0 2px var(--bg), 0 0 0 3.2px var(--trace); flex: none; }
+h1 { font: 400 clamp(38px, 5.4vw, 74px)/1.02 var(--f-display); letter-spacing: -.035em; margin: 0 0 22px; }
+h2 { font: 400 clamp(28px, 3.4vw, 44px)/1.08 var(--f-display); letter-spacing: -.025em; margin: 0 0 16px; }
+.lead { font-size: clamp(18px, 1.6vw, 21px); line-height: 1.5; margin: 0 0 16px; max-width: 58ch; }
+.text p { max-width: 64ch; }
+.text p:not(.lead):not(.kicker) { margin: 0 0 14px; }
+
+/* A section opens on a trace with a solder point, as the panel's line art does. */
+.band { position: relative; padding-top: 30px; }
+.band::before { content: ""; position: absolute; left: 4px; right: 0; top: 0; height: 1.5px; background: linear-gradient(90deg, var(--trace), color-mix(in srgb, var(--trace) 0%, transparent) 80%); }
+.band::after { content: ""; position: absolute; left: 0; top: -4px; width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid var(--trace); background: var(--bg); }
+.h-sec { font: 400 22px/1.2 var(--f-display); letter-spacing: -.01em; margin: 0 0 18px; }
+
+/* ---- Controls inside running text, drawn like the panel ------------------------------ */
+.gw { white-space: nowrap; }
+.g { font-weight: 600; white-space: nowrap; }
+.cap { display: inline-grid; place-items: center; height: 1.35em; min-width: 1.35em; padding: 0 .25em; border: 1.5px solid #241C22; border-radius: .3em;
+  background: var(--key); color: #241C22; font: 600 .78em var(--f-body); line-height: 1; vertical-align: -.28em; margin-right: .3em; box-shadow: 0 .12em 0 #241C22; }
+.cap.key, .cap.black { vertical-align: baseline; height: auto; padding: .2em .32em .14em; margin-right: 0; }
+.cap.black { background: #241C22; color: #F2EADB; }
+:root[data-theme="dark"] .cap.black { box-shadow: 0 .12em 0 #000, 0 0 0 1px var(--key-black-edge); }
+.cap.chompi { background: #ec7f86; width: 1.6em; position: relative; }
+.cap.chompi::before, .cap.chompi::after { content: ""; position: absolute; top: .3em; width: .3em; height: .3em; border-radius: 50%; background: #241C22; box-shadow: 0 0 0 .1em #fffaf0; }
+.cap.chompi::before { left: .3em; } .cap.chompi::after { right: .3em; }
+.cap.wheel { background: #a688d4; border-radius: 50%; width: 1.35em; }
+.cap.knob { background: radial-gradient(circle, var(--key) 52%, #241C22 54%); border-radius: 50%; width: 1.35em; }
+.cap.play { background: #3fa8a2; } .cap.loop { background: #efbd3a; }
+.cap.switch { width: .8em; min-width: .8em; height: 1.5em; padding: 0; border-radius: 99px; background: linear-gradient(var(--key) 50%, #241C22 50%); box-shadow: none; }
+
+/* ---- Chapter 0: the introduction ------------------------------------------------------ */
+[hidden] { display: none !important; }
+.chapter { display: grid; gap: 40px; scroll-margin-top: 100vh; }
+.intro { padding-top: 18px; }
+.hero { position: relative; isolation: isolate; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.04fr); gap: 32px 64px; align-items: center; padding-block: 32px 8px; }
+@media (max-width: 960px) { .hero { grid-template-columns: minmax(0, 1fr); } }
+.hero .cta { display: flex; flex-wrap: wrap; gap: 12px 14px; margin-top: 26px; align-items: center; }
+.hero .text .get { margin: 22px 0 0; font-size: 15px; color: var(--ink-2); }
+.orrery { position: relative; margin: 0; display: grid; gap: 14px; justify-items: center; }
+/* Ripples going out from the orrery: the same centre, beginning just outside the outermost ring. */
+.orb { position: relative; width: 100%; max-width: 600px; }
+.orb::before { content: ""; position: absolute; z-index: -1; inset: -22%; pointer-events: none;
+  background: repeating-radial-gradient(circle closest-side, transparent 0 calc(var(--rip) - 1.2px), color-mix(in srgb, var(--trace) 34%, transparent) calc(var(--rip) - 1.2px) var(--rip));
+  --rip: 6%;
+  -webkit-mask-image: radial-gradient(circle closest-side, transparent 0 69%, #000 71%, transparent 100%); mask-image: radial-gradient(circle closest-side, transparent 0 69%, #000 71%, transparent 100%); }
+.orrery canvas { display: block; width: 100%; aspect-ratio: 1; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 22px; justify-content: center; font: 400 12.5px var(--f-data); }
+.legend span { display: inline-flex; align-items: center; gap: 9px; }
+.legend i, .dotc { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 2px var(--bg), 0 0 0 3.2px var(--trace); flex: none; }
+.meet { margin: 0; font: 400 12.5px var(--f-data); color: var(--ink-2); font-variant-numeric: tabular-nums; min-height: 1.4em; }
+
+.tracks { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 22px 40px; }
+.track { margin: 0; display: grid; grid-template-columns: 68px minmax(0, 1fr); gap: 18px; align-items: center; }
+.track button { width: 68px; height: 68px; padding: 0; border: 0; background: none; cursor: pointer; position: relative; border-radius: 50%; }
+.track svg { display: block; width: 100%; height: 100%; }
+.track .rt { fill: none; stroke: var(--line); stroke-width: 3; }
+.track .rp { fill: none; stroke: var(--accent-hi); stroke-width: 3.5; stroke-linecap: round; transform: rotate(-90deg); transform-origin: 34px 34px; transition: stroke-dashoffset .25s linear; }
+.track .face { fill: var(--key); stroke: var(--key-edge); stroke-width: 1.5; }
+.track .glyph { fill: #241C22; }
+.track .pz { display: none; }
+.track.playing .pz { display: inline; } .track.playing .pl { display: none; }
+.track b { display: block; font: 500 19px/1.25 var(--f-body); }
+.track p { margin: 3px 0 6px; color: var(--ink-2); font-size: 15.5px; line-height: 1.45; }
+.track .time { font: 400 11.5px var(--f-data); color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.recorded { margin: 18px 0 0; font: 400 12px/1.6 var(--f-data); color: var(--ink-2); max-width: 80ch; }
+
+.folds { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); gap: 0 48px; align-items: start; }
+details.fold { border-bottom: 1px solid var(--line); }
+details.fold:first-child { border-top: 1px solid var(--line); }
+@media (min-width: 960px) { details.fold { border-top: 1px solid var(--line); } }
+details.fold summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 18px; padding: 15px 0; font: 500 17px/1.35 var(--f-body); }
+details.fold summary::-webkit-details-marker { display: none; }
+/* The marker is a knob; opening turns it. */
+details.fold summary::after { content: ""; flex: none; width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid var(--ink);
+  background: linear-gradient(var(--ink), var(--ink)) 50% 3px / 2px 8px no-repeat; transition: transform .35s cubic-bezier(.3, 1.4, .5, 1); }
+details.fold[open] summary::after { transform: rotate(150deg); }
+details.fold .more { padding: 0 0 18px; }
+details.fold .more p { margin: 0 0 12px; max-width: 66ch; }
+.footnote { margin: 0; font: 400 12px/1.7 var(--f-data); color: var(--ink-2); max-width: 90ch; }
+
+/* The rounds diagram: a bar per round, from the shared start to where they meet. */
+.diag { margin: 14px 0 10px; max-width: 600px; }
+.diag svg { display: block; width: 100%; height: auto; }
+.diag .d-t { fill: var(--ink); font: 400 11px var(--f-data); }
+.diag .d-l { stroke: var(--ink); stroke-width: 1.5; }
+.diag figcaption { font: 400 12px/1.6 var(--f-data); color: var(--ink-2); margin-top: 6px; }
+
+/* ---- A lesson ------------------------------------------------------------------------- */
+.lesson { gap: 22px; padding-top: 22px; }
+.ltrail { display: flex; align-items: center; gap: 14px 18px; flex-wrap: wrap; }
+.ltrail .leave { margin-left: auto; font: 400 11px var(--f-data); color: var(--ink-2); white-space: nowrap; }
+body:not([data-link="on"]) .ltrail .leave { display: none; }
+.ltrail .where { font: 500 11px var(--f-data); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-2); white-space: nowrap; }
+.ticks { position: relative; display: flex; align-items: center; gap: 0; }
+.ticks::before { content: ""; position: absolute; left: 11px; right: 11px; top: 50%; height: 1.5px; background: var(--trace); opacity: .6; }
+.ticks button { position: relative; width: 26px; height: 26px; display: grid; place-items: center; padding: 0; background: none; border: 0; cursor: pointer; }
+.ticks button i { width: 10px; height: 10px; border-radius: 50%; background: var(--bg); box-shadow: 0 0 0 1.5px var(--ink-2); transition: transform .2s, background .2s; }
+.ticks button.past i { background: var(--ink-2); }
+.ticks button.ok i { background: var(--ok); box-shadow: 0 0 0 1.5px var(--ok); }
+.ticks button.here i { background: var(--accent-hi); box-shadow: 0 0 0 2px var(--bg), 0 0 0 3.5px var(--accent-hi), 0 0 12px 2px color-mix(in srgb, var(--accent-hi) 60%, transparent); transform: scale(1.15); }
+.ticks button.end i { border-radius: 2px; }
+
+.card { display: grid; gap: 22px; }
+.lhead { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 380px); gap: 28px 72px; align-items: start; }
+@media (max-width: 920px) { .lhead { grid-template-columns: minmax(0, 1fr); } }
+.learn-h { margin: 22px 0 6px; font: 500 11px var(--f-data); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-2); }
+.learn { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.learn li { display: grid; grid-template-columns: 22px minmax(0, 1fr); align-items: baseline; font-size: 17px; }
+.learn li::before { content: ""; width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid var(--trace); transform: translateY(-1px); }
+
+.starts { display: grid; gap: 10px; justify-items: start; }
+.score { display: block; width: 100%; max-width: 250px; height: auto; justify-self: center; }
+.score .sc-ring { fill: none; stroke: var(--ink); stroke-opacity: .22; stroke-width: 1; }
+.score .sc-ring.empty { stroke-dasharray: 2.5 4; stroke-opacity: .35; }
+.score .sc-ring.sel { stroke-opacity: .65; stroke-width: 1.6; }
+.score .sc-core { fill: var(--core); stroke: var(--trace); stroke-width: calc(var(--is-dark) * 1.2); }
+.score .sc-core-t { fill: var(--core-ink); font: 500 12px var(--f-data); }
+.score .sc-l { fill: var(--ink-2); font: 400 8.5px var(--f-data); }
+.score .sc-n { stroke: var(--bg); stroke-width: 1.2; }
+.plist { list-style: none; margin: 0; padding: 0; width: 100%; border-top: 1px solid var(--line); }
+.plist li { display: grid; grid-template-columns: 1.7em 16px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 15.5px; }
+.plist li b { font: 500 11.5px var(--f-data); color: var(--ink-2); }
+.plist li span:last-child { font: 400 11.5px var(--f-data); color: var(--ink-2); text-align: right; }
+.plist li.sel span:nth-of-type(1) { font-weight: 600; }
+.plist li.muted { opacity: .45; }
+.startnote { margin: 0; font: 400 12px/1.6 var(--f-data); color: var(--ink-2); }
+
+.way { display: flex; align-items: center; justify-content: space-between; gap: 14px 20px; flex-wrap: wrap; border-top: 1px solid var(--line); padding-top: 16px; }
+.way .go { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; justify-content: flex-end; margin-left: auto; }
+.setnote { font: 400 11.5px/1.5 var(--f-data); color: var(--ink-2); max-width: 36ch; text-align: right; }
+.setnote:empty, body:not([data-link="on"]) .setnote { display: none; }
+
+/* A step: what and why, what to do in big type, then the CHOMPI as the stage. */
+.c-step { gap: 16px; }
+.c-step .top2 { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px; align-items: start; }
+.c-step .st { font: 400 clamp(24px, 2.5vw, 34px)/1.12 var(--f-display); letter-spacing: -.02em; margin: 0 0 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; }
+.c-step.ok .st::after { content: "done on your CHOMPI"; font: 500 10.5px/1 var(--f-data); letter-spacing: .1em; text-transform: uppercase; color: var(--ok);
+  border: 1.5px solid var(--ok); border-radius: 99px; padding: 6px 10px 5px 24px; background: radial-gradient(circle at 12px 50%, var(--ok) 0 3.5px, transparent 4.5px); }
+.c-step .why { margin: 0; color: var(--ink-2); font-size: 17px; max-width: 70ch; }
+.c-step .swnote { margin: 12px 0 0; padding: 8px 12px; border-left: 3px solid var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); font-size: 16px; max-width: 54ch; }
+.c-step .do { margin: 12px 0 0; font: 500 clamp(19px, 1.75vw, 24px)/1.5 var(--f-body); max-width: 54ch; }
+.panel-box { overflow-x: auto; overflow-y: hidden; }
+.panel-box svg { display: block; width: 100%; min-width: 560px; height: auto; margin-inline: auto; }
+.c-step .panel-box { overflow: visible; }
+@media (max-width: 640px) { .c-step .panel-box { overflow-x: auto; } }
+details.what { flex: 1; min-width: 220px; }
+details.what summary { list-style: none; cursor: pointer; text-align: center; font: 500 11px var(--f-data); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); }
+details.what summary::-webkit-details-marker { display: none; }
+details.what summary:hover { color: var(--ink); }
+details.what[open] { flex-basis: 100%; order: 3; }
+.result { margin: 14px 0 0; display: grid; grid-template-columns: 1fr 1fr; gap: 14px 48px; }
+@media (max-width: 720px) { .result { grid-template-columns: 1fr; } }
+.result div { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 2px 12px; }
+.result svg { grid-row: span 2; width: 26px; height: 26px; fill: none; stroke: var(--trace); stroke-width: 1.6; stroke-linecap: round; }
+.result dt { font: 500 10.5px var(--f-data); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-2); }
+.result dd { margin: 0; font-size: 17px; }
+.c-end { justify-items: start; }
+.c-end .closed { width: 132px; height: 132px; }
+.c-end .closed .ring { fill: none; stroke: var(--trace); stroke-width: 1.5; }
+.c-end .closed .dot { fill: var(--accent-hi); }
+.c-end .closed .tick { fill: none; stroke: var(--ink); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.tip { margin: 0; font-size: 18px; max-width: 66ch; }
+.tip b { font-weight: 600; }
+.c-end .way { width: 100%; }
+
+/* ---- The panel ---------------------------------------------------------------------- */
+.panel .housing { fill: var(--panel); stroke: var(--panel-edge); stroke-width: 2.5; }
+.panel .trace { fill: none; stroke: var(--panel-line); stroke-width: 1.4; }
+.panel .node { fill: var(--panel-line); }
+.panel .screw { fill: none; stroke: var(--panel-line); stroke-width: 1.2; }
+.panel .ledring { fill: none; stroke: var(--panel-line); stroke-width: 1.6; }
+.panel .ledwin { fill: var(--led-off); stroke: none; }
+.panel .wkey { fill: var(--key); stroke: var(--key-edge); stroke-width: 1.8; }
+.panel .bkey { fill: var(--key-black); stroke: var(--key-black-edge); stroke-width: 1.8; }
+.panel .knob-body { fill: #1d1a18; stroke: var(--panel-edge); stroke-width: calc(var(--is-dark) * 1.4); }
+.panel .knob-cap { fill: #F6F1E8; }
+.panel .dark-line { stroke: #241C22; fill: none; }
+.panel .dark-fill { fill: #241C22; }
+.panel .eye { fill: #fffaf0; stroke: #241C22; stroke-width: 1.6; }
+.panel .capk { stroke: #241C22; }
+.panel .sw-slot { fill: var(--key-black); stroke: var(--panel-edge); stroke-width: 1.4; }
+.panel .lever { fill: var(--key); }
+.panel .t-name { fill: var(--ink-2); font: 400 13px var(--f-data); }
+.panel .t-panel { fill: var(--panel-ink); font: 500 13px var(--f-body); }
+.panel .t-num { fill: var(--panel-ink); font: 500 15px var(--f-body); }
+.panel .t-wkey { fill: #241C22; font: 500 13px var(--f-body); }
+.panel .t-bkey { fill: #F2EADB; font: 600 13px var(--f-body); }
+.panel .shade { fill: var(--bg); }
+.panel .pen-l { fill: none; stroke: var(--accent); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+.panel .pen-a { fill: none; stroke: var(--accent); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.panel .pen-t { fill: var(--accent); font: 600 34px var(--f-pen); }
+
+/* ---- Afterwards ---------------------------------------------------------------------- */
+.advice { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 330px), 1fr)); gap: 18px 40px; }
+.advice li { display: grid; gap: 4px; padding-left: 22px; position: relative; }
+.advice li::before { content: ""; position: absolute; left: 0; top: .5em; width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--trace); }
+.advice strong { font-weight: 600; font-size: 18px; }
+.advice span { color: var(--ink-2); }
+.pieces { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 30px 40px; }
+.piece { display: grid; grid-template-columns: 128px minmax(0, 1fr); gap: 4px 20px; align-content: start; }
+.piece .score { grid-row: span 6; max-width: 128px; align-self: start; }
+@media (max-width: 460px) { .piece { grid-template-columns: minmax(0, 1fr); } .piece .score { grid-row: auto; justify-self: start; } }
+.piece h4 { margin: 0; font: 400 21px/1.2 var(--f-display); letter-spacing: -.01em; }
+.piece p { margin: 0; }
+.piece .from { font: 500 10.5px var(--f-data); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); }
+.piece .first { font-size: 15.5px; margin-top: 6px; }
+.piece .first ol { margin: 4px 0 0; padding-left: 1.3em; display: grid; gap: 3px; }
+.piece .loadp { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; margin-top: 10px; }
+.piece .loadp span, .piece .noload { font: 400 11px var(--f-data); color: var(--ink-2); }
+.piece .noload { margin-top: 10px; }
+body:not([data-link="on"]) .piece .loadp, body[data-link="on"] .piece .noload { display: none; }
+.pieces-h { font: 400 22px/1.2 var(--f-display); letter-spacing: -.01em; margin: 0 0 14px; }
+.roots-after p { max-width: 74ch; margin: 0 0 12px; }
+.lights { list-style: none; margin: 8px 0 0; padding: 0; }
+.lights li { display: grid; grid-template-columns: 48px minmax(0, 15em) minmax(0, 1fr); gap: 4px 16px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.lights strong { font-weight: 600; }
+.lights span { color: var(--ink-2); }
+@media (max-width: 640px) { .lights li { grid-template-columns: 48px minmax(0, 1fr); } .lights span { grid-column: 2; } }
+.sw { width: 28px; height: 28px; border-radius: 50%; background: #2C2723; position: relative; justify-self: center; box-shadow: 0 0 0 2px var(--bg), 0 0 0 3.5px var(--trace); }
+.sw::after { content: ""; position: absolute; inset: 6px; border-radius: 50%; background: var(--l); box-shadow: 0 0 10px 2px var(--l); }
+.sw.beat::after { animation: sw-beat 2s infinite; } .sw.blink::after { animation: sw-blink 1s steps(1) infinite; }
+.sw.flicker::after { animation: sw-blink .25s steps(1) infinite; } .sw.swell::after { animation: sw-swell .67s ease-in-out infinite alternate; }
+.sw.bar { width: 42px; border-radius: 7px; }
+.sw.bar::after { border-radius: 3px; inset: 10px 6px; background: linear-gradient(90deg, #4cb85c 0 40%, #e9b52a 40% 70%, #d23a2a 70% 85%, transparent 85%); box-shadow: none; }
+@keyframes sw-beat { 0% { opacity: 1; } 25% { opacity: .1; } 100% { opacity: .05; } }
+@keyframes sw-blink { 0% { opacity: 1; } 50% { opacity: .05; } }
+@keyframes sw-swell { from { opacity: .1; } to { opacity: 1; } }
+
+/* ---- Cheat sheet ---------------------------------------------------------------------- */
+.sheetpanel svg { min-width: 560px; }
+.sheetnote { margin: 4px 0 0; font-size: 15.5px; color: var(--ink-2); max-width: 86ch; }
+.sheetctl { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 22px 22px; }
+.sc { min-width: 0; padding-top: 10px; border-top: 1.5px solid var(--trace); }
+.sc h4 { margin: 0 0 8px; font: 600 16.5px var(--f-body); }
+.sc dl { margin: 0; display: grid; gap: 1px; }
+.sc dt { font: 400 10.5px/1.4 var(--f-data); letter-spacing: .04em; color: var(--ink-2); margin-top: 5px; }
+.sc dt.with { color: var(--accent); }
+.sc dd { margin: 0; font-size: 15px; line-height: 1.35; }
+.sheetall { margin: 0; max-width: 80ch; color: var(--ink-2); }
+.sheetboxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 22px 32px; }
+.sheetboxes section { min-width: 0; background: var(--bg-2); border-radius: 14px; padding: 16px 18px 12px; }
+.sheetboxes h3 { margin: 0 0 8px; font: 400 17px var(--f-display); }
+.sheetboxes p { margin: 0 0 8px; font-size: 15px; line-height: 1.45; }
+.sheetboxes dl { margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; font-size: 14.5px; }
+.sheetboxes dt { font-weight: 600; } .sheetboxes dd { margin: 0; }
+@media (max-width: 700px) { .sheetboxes dl { grid-template-columns: 1fr; } }
+.insts { list-style: none; margin: 0 0 10px; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 5px 12px; font-size: 15px; }
+.insts li { display: flex; align-items: center; gap: 8px; }
+.insts b { font: 400 10.5px var(--f-data); color: var(--ink-2); }
+
+/* ---- The live view: a porthole in the corner, and the full view ------------------------- */
+.dock { display: none; position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 20; width: 170px; height: 170px; padding: 8px;
+  border-radius: 50%; background: var(--bg-2); border: 1.5px solid var(--trace); box-shadow: 0 12px 34px rgb(20 12 10 / .22); cursor: zoom-in; }
+.dock canvas { display: block; width: 100%; height: 100%; }
+.dock span { position: absolute; left: 50%; bottom: -9px; transform: translateX(-50%); font: 500 9.5px var(--f-data); letter-spacing: .14em; text-transform: uppercase;
+  background: var(--bg); color: var(--ink-2); border: 1.5px solid var(--trace); border-radius: 99px; padding: 3px 8px 2px; }
+body[data-live="on"][data-loops="on"] .dock { display: block; }
+body[data-ch="0"] .dock { display: none !important; }
+.dockslot .dock { position: relative; right: auto; bottom: auto; width: 150px; height: 150px; box-shadow: none; }
+.livefull { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; padding: 16px; background: color-mix(in srgb, var(--bg) 95%, transparent); backdrop-filter: blur(6px); }
+.livefull .sheet { display: grid; grid-template-columns: minmax(0, min(78vh, 760px)) minmax(220px, 300px); gap: 36px; align-items: center; max-width: 100%; }
+.livefull canvas { display: block; width: 100%; aspect-ratio: 1; }
+@media (max-width: 760px) { .livefull .sheet { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---- The index ------------------------------------------------------------------------- */
+.index { position: fixed; inset: 0; z-index: 40; background: var(--bg); overflow-y: auto; padding: 28px 16px; }
+.index .sheet { max-width: 1240px; margin: 0 auto; display: grid; gap: 22px; }
+.index .head { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.index .head h2 { margin: 0; }
+.index .cols { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 26px 36px; }
+.index section { display: grid; gap: 6px; align-content: start; border-top: 1.5px solid var(--trace); padding-top: 10px; }
+.index h3 { margin: 0; }
+.index h3 button { font: 400 17px var(--f-display) !important; letter-spacing: -.01em; }
+.index h3 b { font: 500 11px var(--f-data); color: var(--ink-2); margin-right: 8px; }
+.index ol, .index ul { margin: 0; padding: 0 0 0 1.5em; display: grid; gap: 2px; color: var(--ink-2); font: 400 11px var(--f-data); }
+.index ul { list-style: none; padding-left: 0; }
+.index li::marker { color: var(--ink-2); }
+.index button[data-l] { font: 400 15.5px var(--f-body); color: var(--ink); background: none; border: 0; padding: 2px 0; cursor: pointer; text-align: left; }
+.index button[data-l]:hover { color: var(--accent); }
+.index button.ok::after { content: ""; display: inline-block; width: 7px; height: 7px; margin-left: 8px; border-radius: 50%; background: var(--ok); vertical-align: 2px; }
+.index button.here { font-weight: 600; color: var(--accent); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+
+<header class="top">
+  <div class="in">
+    <a class="brand" href="#intro" id="brand">CIRCLES <small>a guided start</small></a>
+    <nav class="rail boot" id="prog" aria-label="Chapters"></nav>
+    <div class="link">
+      <button class="kc small" id="linkBtn" type="button">Connect your CHOMPI</button>
+      <button class="quiet" id="demoBtn" type="button">No CHOMPI here? Demo</button>
+      <span class="status" id="linkTag">not connected</span>
+      <span class="load" id="linkLoad"></span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- 0 · Introduction -->
+  <section class="chapter intro" id="intro" data-ch="0">
+    <div class="hero">
+      <div class="text">
+        <p class="kicker">Chapter 0 · Introduction</p>
+        <h1>An ensemble of fifteen loopers</h1>
+        <p class="lead">CIRCLES turns your CHOMPI into fifteen loopers that play together. Each one has its own instrument and its own loop length.</p>
+        <p>Play a short figure and press loop, and that looper keeps repeating it. Then play the next one, or pass the same figure on to another. Because the lengths differ, the loops drift against each other, the way the minimalists worked, and line up only now and then: the music keeps changing on its own. You decide who plays what, and when something changes.</p>
+        <p>There is no grid, no steps and no record button: you play by hand and decide afterwards what to keep. It is closer to conducting a small ensemble than to programming a sequencer, which is why the tutorial calls the loopers players.</p>
+        <div class="cta">
+          <button class="kc primary big" type="button" data-go="1">Start: play and select&nbsp;<i class="ar" aria-hidden="true"></i></button>
+          <button class="kc play big" type="button" id="hear" aria-pressed="false"><svg class="ico" viewBox="0 0 14 14" aria-hidden="true"><path class="pl" d="M3 1.5 L12 7 L3 12.5 Z" fill="#241C22"/></svg><span>Hear three players</span></button>
+        </div>
+        <p class="get" style="margin-top: 22px">Put CIRCLES on a free key of your CHOMPI with the <a href="https://ugrossek.github.io/CHOMPI/setup/">setup tool</a>, or <a href="https://github.com/ugrossek/CHOMPI/releases/download/circles-dev/CHOMPI_CIRCLES_dev.bin" download>download the dev snapshot</a> and send it with <a href="https://ugrossek.github.io/CHOMPI/">Feed the CHOMPI</a>.</p>
+      </div>
+      <figure class="orrery">
+        <div class="orb"><canvas id="rings" width="600" height="600" aria-label="Three players, each a ring turning at its own length round L0 in the middle; their notes light up as they play"></canvas></div>
+        <figcaption class="legend" id="legend"></figcaption>
+        <p class="meet" id="meet" aria-live="polite">together again every 3 × L0</p>
+      </figure>
+    </div>
+
+    <section class="band" aria-labelledby="hearH">
+      <h2 class="h-sec" id="hearH">What it sounds like</h2>
+      <div class="tracks">
+        <figure class="track" data-src="intro-walk.mp3">
+          <button type="button" aria-label="Play The walk" aria-pressed="false"><svg viewBox="0 0 68 68" aria-hidden="true"><circle class="rt" cx="34" cy="34" r="31"/><circle class="rp" cx="34" cy="34" r="31"/><circle class="face" cx="34" cy="34" r="23"/><path class="glyph pl" d="M29 25 L43 34 L29 43 Z"/><g class="glyph pz"><rect x="27" y="25" width="5" height="18" rx="1"/><rect x="36" y="25" width="5" height="18" rx="1"/></g></svg></button>
+          <figcaption><b>The walk</b><p>One figure passed from player to player: marimba, kora, vibes. Then the next figure, from marimba to hang to kora.</p><span class="time">0:00 / 0:40</span></figcaption>
+        </figure>
+        <figure class="track" data-src="intro-interlocking.mp3">
+          <button type="button" aria-label="Play Interlocking" aria-pressed="false"><svg viewBox="0 0 68 68" aria-hidden="true"><circle class="rt" cx="34" cy="34" r="31"/><circle class="rp" cx="34" cy="34" r="31"/><circle class="face" cx="34" cy="34" r="23"/><path class="glyph pl" d="M29 25 L43 34 L29 43 Z"/><g class="glyph pz"><rect x="27" y="25" width="5" height="18" rx="1"/><rect x="36" y="25" width="5" height="18" rx="1"/></g></svg></button>
+          <figcaption><b>Interlocking</b><p>Two gangsas that only make the melody together, with amadinda, a marimba bass and a gong.</p><span class="time">0:00 / 0:30</span></figcaption>
+        </figure>
+        <figure class="track" data-src="intro-long.mp3">
+          <button type="button" aria-label="Play Long loops" aria-pressed="false"><svg viewBox="0 0 68 68" aria-hidden="true"><circle class="rt" cx="34" cy="34" r="31"/><circle class="rp" cx="34" cy="34" r="31"/><circle class="face" cx="34" cy="34" r="23"/><path class="glyph pl" d="M29 25 L43 34 L29 43 Z"/><g class="glyph pz"><rect x="27" y="25" width="5" height="18" rx="1"/><rect x="36" y="25" width="5" height="18" rx="1"/></g></svg></button>
+          <figcaption><b>Long loops</b><p>Vibes, hang, singing bowl and bell, two notes each, on lengths that hardly ever meet.</p><span class="time">0:00 / 0:42</span></figcaption>
+        </figure>
+      </div>
+      <p class="recorded">Played by CIRCLES' own code, nothing added: the instruments and the room of your CHOMPI. The walk is lesson 3; the other two are pieces you can load at the end of the tutorial.</p>
+    </section>
+
+    <section class="band folds" aria-label="Read more">
+      <details class="fold">
+        <summary>Where it comes from</summary>
+        <div class="more">
+          <p>Mostly from <a href="https://en.wikipedia.org/wiki/Minimal_music" target="_blank" rel="noopener">minimal music</a>: short figures that repeat and slowly shift against each other, as in <a href="https://en.wikipedia.org/wiki/In_C" target="_blank" rel="noopener">Terry Riley’s In C</a> and Steve Reich’s phase pieces. Also from gamelan, Brian Eno’s tape loops and circle songs. Where to start listening: at the <a href="#after">end of the tutorial</a>.</p>
+        </div>
+      </details>
+      <details class="fold">
+        <summary>Lengths, ratios and why it never sounds the same</summary>
+        <div class="more">
+          <p>The three players in the rings are ×1, ×3/2 and ×3/4 of L0. They start together and meet again after 3 × L0. In between, every note of one lands somewhere new against the others.</p>
+          <div id="introDiag"></div>
+          <p>Add a fourth player at ×5/4 and the whole ensemble only lines up every 15 × L0. Musicians in the 14th century already built pieces this way and called it <a href="https://en.wikipedia.org/wiki/Isorhythm" target="_blank" rel="noopener">isorhythm</a>: a rhythm and a melody of different lengths, repeated until they meet.</p>
+          <p>CIRCLES keeps every length a ratio of L0: ×1/3, ×1/2, ×2/3, ×3/4, ×1, ×5/4, ×4/3, ×3/2, ×2 and ×3. Simple ratios meet often and feel like one groove. Unusual ones, like 5/4 against 4/3, take a long time to come round and keep the music moving.</p>
+          <p>Because the players repeat what you played and not a quantised version of it, the result keeps your timing. With the feel knob each player gets a little looser on every repeat, like a person and not a machine.</p>
+        </div>
+      </details>
+    </section>
+
+    <p class="footnote">With your CHOMPI connected (Chrome or Edge, CIRCLES running, USB cable), each lesson can set up its players on the CHOMPI, the controls of the step you are on breathe in white there, and a step says done once you have done it. Web MIDI needs the page opened on its own, not inside another page.</p>
+  </section>
+
+  <div id="lessons" style="display:contents"></div>
+</main>
+
+<button class="dock" id="dock" type="button" aria-label="Your CHOMPI, live. Open the full view"><canvas></canvas><span>live</span></button>
+<div class="livefull" id="liveFull" hidden role="dialog" aria-label="Your CHOMPI, live">
+  <div class="sheet">
+    <canvas></canvas>
+    <div><p class="kicker">Your CHOMPI, live</p><ul class="plist players"></ul><p style="margin:18px 0 0"><button class="kc" type="button" data-close>Close</button></p></div>
+  </div>
+</div>
+
+<script>
+(() => {
+"use strict";
+// ---- Theme: the canvases read their colours from the page's tokens -------------------
+const TK = {};
+function readTokens() {
+  const cs = getComputedStyle(document.documentElement);
+  ["ink", "ink-2", "line", "bg", "bg-2", "accent", "accent-hi", "core", "core-ink", "trace"].forEach(k => TK[k] = cs.getPropertyValue("--" + k).trim());
+  TK.dark = cs.getPropertyValue("--is-dark").trim() === "1";
+}
+readTokens();
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", readTokens);
+new MutationObserver(readTokens).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme", "class", "style"] });
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// ---- The lessons' content, unchanged from the stage tutorial ---------------------------
+const P = { wood: ["Wood", "#e2762f"], marimba: ["Marimba", "#cf3b2c"], vibes: ["Vibes", "#2c5aa0"], bronze: ["Bronze", "#e9b52a"],
+  glass: ["Glass", "#3f86c9"], bell: ["Bell", "#a59d90"], gong: ["Gong", "#5e3f8f"], felt: ["Felt", "#e58aa6"],
+  snare: ["Snare bar", "#3e8a4c"], muffled: ["Muffled", "#d9a066"], amadinda: ["Amadinda", "#c04aa8"], gangsa: ["Gangsa", "#e9b52a"],
+  mbira: ["Mbira", "#2f9e7a"], kora: ["Kora", "#e58aa6"], hang: ["Hang", "#3a9f9a"], bowl: ["Singing bowl", "#a3b23c"], piano: ["Pulse piano", "#3f86c9"] };
+// LEDs as the CHOMPI shows them. A step's `leds` maps a control to [colour, brightness 0..1].
+const PRESET_INK = ["#e2762f", "#cf3b2c", "#2c5aa0", "#e9b52a", "#3f86c9", "#a59d90", "#5e3f8f", "#e58aa6", "#3e8a4c", "#d9a066",
+  // the sound study's: amadinda, gangsa, mbira, kora, hang, singing bowl, bowed glass, voices, siku, pulse piano, hands, tape
+  "#c04aa8", "#e9b52a", "#2f9e7a", "#e58aa6", "#3a9f9a", "#a3b23c", "#e58aa6", "#3e8a4c", "#2f9e7a", "#3f86c9", "#c04aa8", "#d9a066"];
+// The instruments on the white keys (CHOMPI + a player's key twice), in key order; also
+// the players at power-on (player 15 has the first again).
+const SET = [0, 1, 10, 11, 12, 13, 8, 9, 2, 5, 14, 15, 6, 4];
+// A player's colour in a lesson: as the lesson sets it up, else as at power-on.
+const playerInk = (lesson, n) => {
+  const p = lesson && SETUP[lesson.id] && SETUP[lesson.id].players.find(x => x[0] === n);
+  return PRESET_INK[p ? PRESET[p[1]] : SET[(n - 1) % 14]];
+};
+// A step's lights name a player's colour as "player:n"; paint() looks it up for the lesson.
+const inkOf = (v, lesson) => typeof v[0] === "string" && v[0].startsWith("player:") ? [playerInk(lesson, +v[0].slice(7)), v[1]] : v;
+const LED_WHITE = "#fffaf0";
+const ledsNotes = (col, keys) => Object.fromEntries(keys.map(k => ["w" + k, [col, 1]]));
+// CHOMPI held: the players on the white keys (the chosen one bright), the ratios on the
+// black (the player's, or the ensemble's on all, bright; one waiting for the next L0 blinks).
+const RATIO_IDS = ["1/3", "1/2", "2/3", "3/4", "1", "5/4", "4/3", "3/2", "2", "3"];
+const ledsPlayers = (sel, ratio = "1", presets = {}) => {
+  const m = {};
+  for (let c = 1; c <= 15; c++) m["w" + c] = [presets[c] !== undefined ? PRESET_INK[presets[c]] : "player:" + c, c === sel ? 1 : .25];
+  RATIO_IDS.forEach(r => m["r" + r] = [LED_WHITE, r === ratio ? 1 : .12]);
+  return m;
+};
+// Play held: the players, the ones listened to bright, muted ones red.
+const ledsListen = (on = [], muted = [], n = 6) => {
+  const m = {};
+  for (let c = 1; c <= 15; c++) m["w" + c] = muted.includes(c) ? ["#d23a2a", 1] : ["player:" + c, on.includes(c) ? 1 : .2];
+  return m;
+};
+// Turning a knob: the 25 keys in keyboard order are the range, in white. A faint fill up
+// to the value (from the middle for an offset), the value bright, the preset's own value
+// in the player's colour.
+const KEYS25 = (() => { const wm = [1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1]; let w = 0, b = 0;
+  return Array.from({ length: 25 }, (_, k) => wm[k % 12] ? "w" + (++w) : "r" + RATIO_IDS[b++]); })();
+const ledsMeter = (v, mark, col, from = 0) => {
+  const m = {}, at = Math.round(v * 24), mk = mark == null ? -1 : Math.round(mark * 24), f = Math.round(from * 24);
+  KEYS25.forEach((id, k) => {
+    if (k >= Math.min(f, at) && k <= Math.max(f, at)) m[id] = [LED_WHITE, .1];
+    if (k === mk) m[id] = [col, .45];
+    if (k === at) m[id] = [LED_WHITE, 1];
+  });
+  return m;
+};
+const ledsSounds = cur => Object.fromEntries(SET.map((p, i) => ["w" + (i + 1), [PRESET_INK[p], p === cur ? 1 : .25]]));
+const ledsOctave = oct => Object.fromEntries(["1/3", "1/2", "2/3", "3/4", "1"].map((r, i) => ["r" + r, [LED_WHITE, i - 2 === oct ? 1 : .15]]));
+
+const LESSONS = [
+  { id: "play", name: "Play and select", v2: true, state: { running: false },
+    title: "One player at a time",
+    lead: "CIRCLES has fifteen players. The keys always play one of them: the one you chose. So choosing comes first. Everything later, keeping a figure, its length, its sound, you do for one player.",
+    learn: ["choose one of the fifteen players", "give a player its instrument", "move a player up or down an octave"],
+    starts: [[1, "wood", "ready"], [2, "marimba", "ready"], [3, "amadinda", "ready"], [4, "gangsa", "ready"]],
+    startNote: "Nothing plays yet. These are the first four players. Put the switch on the left down, on one.",
+    steps: [
+      { title: "Play, and find the volume",
+        why: "When you start, the keys play player 1. Its instrument is wood. And K6, on the far right, is the volume of everything: good to know before anything gets loud.",
+        do: "Put the {switch} down, on one: then the keys and knobs work on the player you chose. Play a few keys. Turn {k6} until it is comfortable.",
+        see: "Each key lights orange while you play it: orange is wood's colour. While you turn K6, the keys show the volume as a bar.",
+        hear: "A dry wooden bar, two octaves from C3 to C5. Louder to the right, softer to the left.",
+        touch: { switch: "down, on one", keys: "play", k6: "turn" }, pen: { switch: "first the switch on one" }, leds: ledsNotes(PRESET_INK[0], [3, 5, 8]), white: "notes", black: "" },
+      { title: "See all fifteen players",
+        why: "To play another player, you first have to find it. CHOMPI shows them to you.",
+        do: "Hold {chompi} and look at the white keys: each one is a player.",
+        see: "The fifteen white keys are now the fifteen players, each in the colour of its instrument. Player 1 is bright: that's the one the keys play. The black keys light up too; they come in lesson 4, on lengths.",
+        hear: "Nothing new. Holding CHOMPI only shows, until you press something.",
+        touch: { chompi: "hold", white: "watch" }, pen: { white: "the fifteen players" }, leds: ledsPlayers(1), white: "", black: "" },
+      { title: "Choose player 3",
+        why: "Every player is a musician of its own. Choosing one means the keys play it from now on.",
+        do: "Keep holding {chompi} and press {w3}. Let go of both, then play.",
+        see: "Key 3 becomes the bright one. When you play, the keys light magenta: the amadinda.",
+        hear: "Amadinda, a log xylophone from Uganda: short and woody.",
+        touch: { chompi: "hold", w3: "press" }, state: { sel: 2 }, leds: ledsPlayers(3), white: "", black: "" },
+      { title: "Give it another instrument",
+        why: "Every player can have any of the fourteen instruments; that's how you put your ensemble together. One tap on a player's key chooses it, a second tap opens its instruments.",
+        do: "Hold {chompi} and tap {w3} twice. Keep CHOMPI down and press {w9}, the vibes. Then let go.",
+        see: "After the second tap, white keys 1 to 14 show the fourteen instruments in their colours. Key 3 is bright, because player 3 has the amadinda. Press the vibes, and key 9 is bright.",
+        hear: "Every instrument you press plays a note, so you can try them out. When you let go, player 3 plays the vibes, with a long, soft ring.",
+        touch: { chompi: "hold", w3: "tap twice", w9: "press" }, state: { sel: 2, preset: 2 }, leds: ledsSounds(2), white: "sounds", black: "" },
+      { title: "Move it up or down",
+        why: "Players in different octaves don't get in each other's way: a low marimba and high vibes stay clear together. Each player keeps its own octave.",
+        do: "Turn the {wheel}.",
+        see: "The five lowest black keys show the octave, from −2 to +2. The bright one is player 3's.",
+        hear: "Every few clicks, player 3 moves an octave up or down.",
+        touch: { wheel: "turn" }, state: { sel: 2, preset: 2 }, leds: ledsOctave(1), white: "notes", black: "octave" },
+    ],
+    tip: "Everything you set belongs to the player you chose. Choose another player, and you set theirs." },
+
+  { id: "loop", name: "Keep a figure", v2: true,
+    title: "Play it, then keep it",
+    lead: "CIRCLES has no record button. You play first, and decide afterwards to keep it. A kept figure is what a player repeats, again and again: everything that follows starts from there.",
+    learn: ["keep what you just played as a player's figure", "add to it, or replace it", "clear it and start over"],
+    starts: [[1, "wood", "no figure"], [2, "marimba", "no figure"]],
+    startNote: "Running, with L0 at 2 seconds. Player 1 is chosen.",
+    steps: [
+      { title: "Play along",
+        why: "Every figure is measured in L0, the length all players share. The two lights above the wheel flash once per L0: that is the beat to play with.",
+        do: "Tap a key each time the lights above the {wheel} flash. Four or five times.",
+        see: "The two lights flash every 2 seconds, and the key you tap lights orange. The light above loop stays dark: player 1 has no figure yet. All the lights are on <a href=\"#lights\">their own page</a>.",
+        hear: "Your taps on wood, one on each L0. From one flash to the next is how long a figure is in the next step.",
+        touch: { wheel: "watch", keys: "play" }, pen: { wheel: "watch these lights", keys: "tap a key on each flash" },
+        leds: Object.assign(ledsNotes(PRESET_INK[0], [8]), { l_w1: [LED_WHITE, 1], l_w2: [LED_WHITE, 1] }), white: "", black: "" },
+      { title: "Play, then keep it",
+        why: "CIRCLES has no record button. It always listens, so you decide after playing.",
+        do: "Play a short figure, a few notes across a flash or two. Then press {loop}, whenever you like.",
+        see: "The light above loop now flashes orange each time the figure comes round, and the keys light with its notes.",
+        hear: "The figure keeps going without you: the last 2 seconds you played (one L0), with your timing.",
+        touch: { keys: "play", loop: "press" }, state: { loop: true }, leds: Object.assign(ledsNotes(PRESET_INK[0], [1, 3, 5]), { l_loop: [PRESET_INK[0], 1] }), white: "notes", black: "" },
+      { title: "Add to it",
+        why: "A figure can grow. With CHOMPI, loop keeps the old notes and adds the new ones.",
+        do: "Play a few notes on top, then hold {chompi} and press {loop}.",
+        see: "With CHOMPI down, the white keys show the players; key 1 flashes with its notes.",
+        hear: "One figure, with more notes.",
+        touch: { keys: "play", chompi: "hold", loop: "press" }, state: { loop: true }, leds: ledsPlayers(1), black: "" },
+      { title: "Replace it",
+        why: "Changed your mind? A new figure replaces the old one. No need to clear first.",
+        do: "Play something different and press {loop} again.",
+        see: "The keys light with the new notes.",
+        hear: "The new figure takes over at once.",
+        touch: { keys: "play", loop: "press" }, state: { loop: true }, leds: ledsNotes(PRESET_INK[0], [2, 6, 9, 10]), white: "notes", black: "" },
+      { title: "Stop and start",
+        why: "Play stops and starts the whole ensemble. The figures stay.",
+        do: "Press {play}, and again.",
+        see: "The play light and the wheel's flashes go out, and come back.",
+        hear: "Silence, then the figure again, from its start.",
+        touch: { play: "press" }, state: { loop: true }, black: "" },
+      { title: "Clear it",
+        why: "To take a player back to silence and start over.",
+        do: "Hold {loop} for 2 seconds.",
+        see: "After a second the light above loop turns red. Let go after two; then it is dark.",
+        hear: "Player 1 is quiet. Its figure is gone.",
+        touch: { loop: "hold 2 s" }, leds: { l_loop: ["#d23a2a", 1] }, black: "" },
+    ],
+    tip: "CHOMPI + loop held for 2 seconds clears every player at once. Good for starting over, less good by accident." },
+
+  { id: "walk", name: "The In C walk", v2: true,
+    title: "Pass the figures around",
+    lead: "In Terry Riley's In C, every musician plays the same short figures and moves on to the next whenever they like. Here you do the moving: pass a figure from player to player. It keeps its notes and its length, and takes on the new player's instrument.",
+    learn: ["copy a figure from one player to another", "listen to one player", "slide a figure later or earlier", "let a figure travel through the ensemble"],
+    starts: [[1, "wood", "figure A · ×1"], [2, "marimba", "figure B · ×1"], [3, "vibes", "no figure · +1 oct"], [4, "bronze", "no figure"]],
+    startNote: "Two figures play. Players 3 and 4 wait.",
+    steps: [
+      { title: "Copy figure A to player 3",
+        why: "Copying gives a player another one's figure, in step, so it joins without a stumble.",
+        do: "Hold {chompi}, hold {w1}, then press {w3}.",
+        see: "Key 3 becomes the chosen player and flashes in blue with the notes of figure A.",
+        hear: "The vibes join with figure A, an octave higher. The figure moved; the instrument stayed.",
+        touch: { chompi: "hold", w1: "hold", w3: "press" }, state: { sel: 2 }, leds: ledsPlayers(3), black: "ratios" },
+      { title: "Listen to player 3",
+        why: "With several players it is hard to hear who plays what. Listening brings one forward.",
+        do: "Hold {play} and hold {w3}.",
+        see: "Key 3 is bright, the other players dim.",
+        hear: "The others step back so you hear player 3. Let go, and they come back.",
+        touch: { play: "hold", w3: "hold" }, state: { sel: 2 }, leds: ledsListen([3]), black: "" },
+      { title: "Pass it on",
+        why: "A figure travelling from instrument to instrument: that is the sound of In C. Copying is the one gesture with two keys held at once: first the player who has the figure, then the one who gets it. Let go of 3 too early, and you only choose player 4.",
+        do: "Hold {chompi}. Hold {w3} and keep it down. Now press {w4}.",
+        see: "Key 4 is now the chosen player, flashing in yellow: bronze, playing player 3's figure.",
+        hear: "Three players carry figure A, on three instruments.",
+        touch: { chompi: "hold", w3: "hold", w4: "press" }, pen: { w3: "then hold 3, keep it down", w4: "then press 4" },
+        state: { sel: 3 }, leds: ledsPlayers(4), black: "ratios" },
+      { title: "Let the copy drift",
+        why: "A copy and its original play the same figure, in step. Give the copy a longer length, and it falls behind a little every round: the figure moves through itself. Steve Reich built whole pieces on this. (The black keys are the lengths; the next lesson is about them.)",
+        do: "Player 4 is still chosen. Hold {chompi} and press {b:5/4}.",
+        see: "5/4 blinks until the wheel's next flash, then stays bright.",
+        hear: "The bronze plays figure A with a short rest after it, and slides through the wood and the vibes until, a few rounds later, they meet in step again.",
+        touch: { chompi: "hold", "r5/4": "press" }, state: { sel: 3 }, leds: ledsPlayers(4, "5/4"), black: "ratios" },
+      { title: "Slide a copy",
+        why: "A longer length lets a copy drift by itself. You can also move one yourself: slide it later or earlier in its round, and it stays there, an echo or an answer to the others.",
+        do: "Choose player 3 ({chompi} + {w3}). Hold {loop} and turn the {wheel} slowly to the right, a few clicks.",
+        see: "While you turn, the keys show how far the figure has slid: a bar from the lowest key, the whole keyboard a whole round.",
+        hear: "The vibes play figure A a little after the wood, like an echo. To bring them back in step, hold {loop} and push the {wheel}.",
+        touch: { chompi: "hold", w3: "press", loop: "hold", wheel: "turn" }, pen: { wheel: "turn it" }, state: { sel: 2 }, leds: ledsMeter(2 / 16, null, PRESET_INK[2]), white: "", black: "" },
+      { title: "Move player 1 on",
+        why: "In In C the musicians don't move on together. Let one start something new while the others keep the old.",
+        do: "Choose player 1 ({chompi} + {w1}), play a new figure and press {loop}.",
+        see: "The keys light orange with the new figure.",
+        hear: "Old and new figures overlap. That is the In C sound.",
+        touch: { keys: "play", loop: "press" }, leds: ledsNotes(PRESET_INK[0], [4, 6, 7]), white: "notes", black: "" },
+    ],
+    tip: "Move one player, listen, then the next. In C has 53 figures and lasts as long as it takes." },
+
+  { id: "ratios", name: "Lengths", v2: true,
+    title: "Lengths that drift",
+    lead: "In the walk, a copy with a longer length slid through the others. Here you choose lengths from the start. Player 1 plays a figure of one L0, 2 seconds; you make a second one that is a little shorter: 1½ seconds. Both play at the same speed, but the short one comes round sooner each time, so the two slide against each other, and every 6 seconds they start together again.",
+    diagram: true,
+    learn: ["choose how long a player's figure is, before you play it", "hear two lengths slide against each other and meet again", "change the tempo of everyone"],
+    starts: [[1, "wood", "a figure · 2 s"], [2, "marimba", "no figure"], [3, "vibes", "no figure"]],
+    startNote: "Player 1 plays a figure of one L0, 2 seconds. Player 1 is chosen.",
+    steps: [
+      { title: "Find the lengths",
+        why: "Before you play a figure, you can choose how long it will be. The lengths are on the black keys, while you hold CHOMPI.",
+        do: "Hold {chompi} and look at the black keys.",
+        see: "The black keys light up: the lengths, from 1/3 to 3 times L0. The bright one is 1: player 1's figure is one L0 long.",
+        hear: "Player 1, as before. Holding CHOMPI only shows.",
+        touch: { chompi: "hold" }, leds: ledsPlayers(1), black: "ratios" },
+      { title: "Make player 2 shorter",
+        why: "Player 2 gets three quarters of L0: 1½ seconds instead of 2. First choose the player, then its length.",
+        do: "Hold {chompi}. Press {w2} to choose player 2, then {b:3/4} to give it its length.",
+        see: "Key 2 is bright: player 2 is chosen. 3/4 is bright: its length.",
+        hear: "Nothing yet. Player 2 has a length now, but no notes.",
+        touch: { chompi: "hold", w2: "press", "r3/4": "press" }, state: { sel: 1 }, leds: ledsPlayers(2, "3/4"), black: "ratios" },
+      { title: "Fill it",
+        why: "Now play something for player 2. Loop keeps the last 1½ seconds you played: exactly its new length.",
+        do: "Let go of CHOMPI. Play a few notes along with player 1, then press {loop}.",
+        see: "The light above loop flashes red, marimba's colour, each time player 2 comes round: just before the wheel's flash, then earlier and earlier.",
+        hear: "Player 1 repeats every 2 seconds, player 2 every 1½. They start together, drift apart, and after 6 seconds they start together again. That is the drifting.",
+        touch: { keys: "play", loop: "press" }, state: { sel: 1, loop: true }, leds: Object.assign(ledsNotes(PRESET_INK[1], [5, 7, 8]), { l_loop: [PRESET_INK[1], 1] }), white: "notes", black: "" },
+      { title: "A third, longer one",
+        why: "5/4 is a little longer than L0: 2½ seconds. This figure falls behind instead of running ahead.",
+        do: "Hold {chompi}, press {w3}, then {b:5/4}. Let go, play a few notes, press {loop}.",
+        see: "Key 3 bright, 5/4 bright. Then the light above loop flashes blue, the vibes' colour.",
+        hear: "Three figures on one pulse. All three start together only every 30 seconds; in between, the pattern keeps changing.",
+        touch: { chompi: "hold", w3: "press", "r5/4": "press", loop: "press" }, state: { sel: 2 }, leds: ledsPlayers(3, "5/4"), black: "ratios" },
+      { title: "Lengthen a figure",
+        why: "A player that already has a figure can get a new length too. Its notes stay exactly as you played them: a longer length adds a rest after them. (A shorter one wraps the notes past its end round to its beginning; they unfold again when it grows.)",
+        do: "Hold {chompi}, press {w1}, then {b:5/4}.",
+        see: "5/4 blinks until the wheel's next flash, then stays bright.",
+        hear: "Player 1 plays the same notes on the same pulse, now with a short rest after them: it falls a little behind the others each round.",
+        touch: { chompi: "hold", w1: "press", "r5/4": "press" }, leds: ledsPlayers(1, "5/4"), black: "ratios" },
+      { title: "Change the tempo",
+        why: "L0 is the length everyone shares. Make it shorter or longer and every figure follows; their lengths stay in proportion.",
+        do: "Hold {chompi} and turn the {wheel}.",
+        see: "The wheel's lights flash faster or slower.",
+        hear: "Everything faster or slower, together. Hold {chompi} and push the {wheel} for the tempo you started with.",
+        touch: { chompi: "hold", wheel: "turn" }, leds: Object.assign(ledsPlayers(1), { l_w1: [LED_WHITE, 1], l_w2: [LED_WHITE, 1] }), black: "ratios", layer: "chompi" },
+    ],
+    tip: "A length never changes the notes, only when the figure starts again. It always waits for the wheel's next flash, so you can't press it at a wrong moment." },
+
+  { id: "sound", name: "Shape the sound", v2: true, state: { sel: 2 },
+    title: "Turn while it plays",
+    lead: "Every player's instrument can be shaped: a harder mallet, a brighter tone, a longer ring. The knobs act on the player you chose, and while you turn, the keys show the value.",
+    learn: ["change a player's sound while it plays", "read a value on the keys", "place players left and right"],
+    starts: [[1, "wood", "figure · ×1"], [2, "marimba", "figure · ×3/2"], [3, "vibes", "figure · ×1"], [4, "bronze", "figure · ×3/4"]],
+    startNote: "Player 3, the vibes, is chosen.",
+    steps: [
+      { title: "Strike",
+        why: "How hard the mallet hits the bar.",
+        do: "Turn {k1}.",
+        see: "The keys turn into a bar, from the lowest key to the highest. The bright key is the value; the blue one is where the vibes started.",
+        hear: "From a soft mallet to a hard one.",
+        touch: { k1: "turn" }, leds: ledsMeter(.7, .5, PRESET_INK[2]), black: "" },
+      { title: "Brightness and decay",
+        why: "Brightness is the colour of the tone, decay how long a note rings.",
+        do: "Turn {k2}, then {k3}.",
+        see: "The bar again, for each knob.",
+        hear: "Darker or brighter; short or ringing.",
+        touch: { k2: "turn", k3: "turn" }, leds: ledsMeter(.35, .5, PRESET_INK[2]), black: "" },
+      { title: "Feel",
+        why: "A musician never plays a figure exactly the same twice. Feel adds that.",
+        do: "Hold {chompi} and turn {k2}.",
+        see: "The bar shows how loose the player is.",
+        hear: "Player 3 gets looser: a little different every time round, now and then a note left out.",
+        touch: { chompi: "hold", k2: "turn" }, leds: ledsMeter(.55, .3, PRESET_INK[2]), black: "", layer: "chompi" },
+      { title: "Shimmer and prep",
+        why: "Two preparations from real instruments.",
+        do: "Hold {chompi}, turn {k1}, then {k3}.",
+        see: "The bar, for each.",
+        hear: "Shimmer plays every note on two bars tuned slightly apart, so they beat like a gamelan. Prep is the instrument's own preparation: on the mallets a rattling membrane on the bar, like a balafon.",
+        touch: { chompi: "hold", k1: "turn", k3: "turn" }, leds: ledsMeter(.45, 0, PRESET_INK[2]), black: "", layer: "chompi" },
+      { title: "Level and pan",
+        why: "Balance the players, and spread them between left and right.",
+        do: "Turn {k4} for the level. Hold {chompi} and turn {k4} for the pan.",
+        see: "For the pan, a bar from the middle of the keys, to the left or to the right.",
+        hear: "Player 3 louder or softer, then further to one side.",
+        touch: { chompi: "hold", k4: "turn" }, leds: ledsMeter(.75, null, PRESET_INK[2], .5), black: "", layer: "chompi" },
+    ],
+    tip: "Nothing to confirm or save: a change is heard at once and stays with the player. The bar fades a moment after you stop turning." },
+
+  { id: "ensemble", name: "The ensemble", v2: true,
+    title: "Conduct",
+    lead: "So far you worked on one player at a time. With the switch on all, the same controls act on the whole ensemble at once: you conduct.",
+    learn: ["switch the controls to the whole ensemble", "change everyone's length at once", "take a player out and bring it back"],
+    starts: [[1, "wood", "×1"], [2, "marimba", "×3/2"], [3, "vibes", "×1"], [4, "bronze", "×3/4"], [5, "glass", "×2"], [6, "bell", "×3"]],
+    startNote: "Six players, all playing.",
+    steps: [
+      { title: "Switch to all",
+        why: "The switch decides who the controls act on: the player you chose, or everyone.",
+        do: "Push the {switch} up, to all.",
+        see: "The lights above the knobs turn four different colours: they act on everyone now.",
+        hear: "Nothing changes yet.",
+        touch: { switch: "push up" }, all: true, black: "" },
+      { title: "Everyone twice as fast",
+        why: "On all, a ratio sets the ensemble's tempo. Every figure stays whole, and so do the relations between the players.",
+        do: "Hold {chompi} and press {b:1/2}.",
+        see: "1/2 blinks until the next L0, then stays bright.",
+        hear: "On the next L0, everyone plays twice as fast, each figure as it was. Hold {chompi} and press {b:1} and the tempo is back.",
+        touch: { chompi: "hold", "r1/2": "press" }, all: true, leds: ledsPlayers(1, "1/2"), black: "ratios" },
+      { title: "Shape everyone",
+        why: "Shift every player's sound at once, each from where it is.",
+        do: "Turn {k1}, {k2} or {k3}.",
+        see: "A bar from the middle: to the left is less, to the right more.",
+        hear: "The whole ensemble softer or harder, darker or brighter, shorter or longer.",
+        touch: { k1: "turn", k2: "turn", k3: "turn" }, all: true, leds: ledsMeter(.67, null, LED_WHITE, .5), black: "" },
+      { title: "Narrow or wide",
+        why: "K4 does what it does for one player: on its own the level, with CHOMPI the pan. For everyone, it is the width: all together in the middle, or spread out wide.",
+        do: "Hold {chompi} and turn {k4} left, then right.",
+        see: "A bar: the width. The mark in the middle is the pans as you set them.",
+        hear: "The players gather in the middle, then spread out wide. (K4 without CHOMPI: everyone louder or softer.)",
+        touch: { chompi: "hold", k4: "turn" }, all: true, leds: ledsMeter(.75, .5, LED_WHITE), black: "", layer: "chompi" },
+      { title: "Take a player out",
+        why: "Mute a player for a while without losing its figure.",
+        do: "Hold {play} and tap {w5}.",
+        see: "Key 5 blinks red while the glass is muted.",
+        hear: "The glass is gone; its figure runs on silently. The same again brings it back.",
+        touch: { play: "hold", w5: "press" }, all: true, leds: ledsListen([], [5]), black: "" },
+      { title: "Volume and room",
+        why: "The room is the space the ensemble plays in.",
+        do: "Turn {k6} for the volume. Hold {chompi} and turn {k6} for the room.",
+        see: "The bar shows the volume, then the room.",
+        hear: "From close and dry to a large hall.",
+        touch: { chompi: "hold", k6: "turn" }, all: true, leds: ledsMeter(.5, null, LED_WHITE), black: "", layer: "chompi" },
+      { title: "Back to one",
+        why: "To work on a single player again.",
+        do: "Push the {switch} down, to one.",
+        see: "The knob lights show the chosen player's colour again.",
+        hear: "Nothing changes: the ensemble keeps what you set.",
+        touch: { switch: "push down" }, black: "" },
+    ],
+    tip: "Muting players one by one is also a good way to end a piece." },
+
+  { id: "after", name: "Afterwards",
+    title: "Playing a piece",
+    lead: "That's all the controls. A few ideas for playing with them.",
+    advice: [
+      ["Start with one player.", "Let it run for a while before the second comes in. Repetition needs time before it starts to move."],
+      ["Copy rather than invent.", "A figure that travels through three instruments says more than three new figures."],
+      ["Keep most players at ×1.", "One or two at 3/2 or 4/3 are enough to make the whole thing drift."],
+      ["Change one thing at a time.", "Then wait at least a round of L0 and listen to what it did."],
+      ["End by thinning out.", "Mute or clear the players one by one, until one figure is left. Then stop."],
+      ["Have fun!", "There are no wrong notes here. Keep what sounds good, clear the rest and play again."],
+    ] },
+];
+
+// ---- Afterwards: pieces to start from, and the lights that need a word ------------
+// A piece is a set of players as a lesson starts with (figures on eight pulses per L0,
+// keys C3 = 48 .. C5 = 72), with a line on where it comes from and what to try first.
+const AFTER = LESSONS.find(L => L.id === "after");
+AFTER.pieces = [
+  { title: "After In C", from: "after Terry Riley, 1964",
+    about: "A high C on every pulse and one short figure. That's all: the piece grows as you add to it, one player at a time, as In C does.",
+    first: "<ol><li>Copy player 2's figure to player 3: hold CHOMPI, hold 2, press 3.</li><li>Choose player 4 and give it the length 3/4. On a beat, play E F E and press loop. Now the figures drift.</li><li>Choose player 2, play a short figure of your own on E, F and G, and press loop.</li></ol>",
+    setup: { sel: 2, players: [
+      [1, "felt", [[0, 72], [1, 72], [2, 72], [3, 72], [4, 72], [5, 72], [6, 72], [7, 72]]],
+      [2, "marimba", [[0, 64], [1, 65], [2, 64], [4, 67]]],
+    ] } },
+  { title: "Interlocking", from: "after Balinese gamelan",
+    about: "Two gangsa parts that never play at the same time, one on the pulses, one between them: only together do they make the melody. A driving amadinda, a marimba bass and a gong underneath, on a quick L0.",
+    first: "Mute player 2 and hear half the melody go. Bring it back, then turn K1 up on player 1 for an even harder strike.",
+    setup: { sel: 1, l0: 1600, players: [
+      [1, "gangsa", [[0, 64], [2, 62], [4, 64], [6, 67]], "1", 0, 1],
+      [2, "gangsa", [[1, 69], [3, 67], [5, 69], [7, 72]], "1", 0, 1],
+      [3, "amadinda", [[0, 52], [1, 52], [3, 52], [4, 55], [6, 52], [7, 52]], "1", -1, .9],
+      [4, "marimba", [[0, 48], [4, 50], [8, 55], [12, 52]], "2", -1, .9],
+      [5, "gong", [[0, 48]], "2"],
+    ] } },
+  { title: "Long loops", from: "after Brian Eno, 1978",
+    about: "Four players with two notes each, on lengths that hardly ever meet: ×5/4, ×4/3, ×2 and ×3, on a slow L0 of 3 seconds.",
+    first: "Turn the room up (CHOMPI and K6), and change nothing for two minutes.",
+    setup: { sel: 1, l0: 3000, players: [
+      [1, "vibes", [[0, 65], [4, 69]], "5/4"],
+      [2, "hang", [[0, 60], [5, 64]], "4/3"],
+      [3, "bowl", [[0, 53], [7, 57]], "2"],
+      [4, "bell", [[0, 67], [14, 62]], "3"],
+    ] } },
+];
+// Where CIRCLES comes from, and where to start listening (moved here from the
+// introduction: after playing, people recognise in it what they did).
+AFTER.roots = "<h3 class=\"pieces-h\">Listen further</h3>\n      <p>The biggest inspiration is <a href=\"https://en.wikipedia.org/wiki/In_C\" target=\"_blank\" rel=\"noopener\">Terry Riley\u2019s In C</a> (1964), a founding work of <a href=\"https://en.wikipedia.org/wiki/Minimal_music\" target=\"_blank\" rel=\"noopener\">minimal music</a>: 53 short figures on one page, and every musician moves through them at their own pace, so the figures keep meeting in new ways.</p>\n      <p>Four more sources CIRCLES draws on for inspiration: Steve Reich\u2019s phase pieces like <a href=\"https://en.wikipedia.org/wiki/Piano_Phase\" target=\"_blank\" rel=\"noopener\">Piano Phase</a> (1967), where one player slowly drifts out of step with another; the interlocking parts of <a href=\"https://en.wikipedia.org/wiki/Gamelan\" target=\"_blank\" rel=\"noopener\">gamelan</a>, which only make the melody together; and Brian Eno\u2019s loops of different lengths in <a href=\"https://en.wikipedia.org/wiki/Discreet_Music\" target=\"_blank\" rel=\"noopener\">Discreet Music</a> (1975) and <a href=\"https://en.wikipedia.org/wiki/Ambient_1:_Music_for_Airports\" target=\"_blank\" rel=\"noopener\">Music for Airports</a> (1978); and circle singing, as <a href=\"https://en.wikipedia.org/wiki/Bobby_McFerrin\" target=\"_blank\" rel=\"noopener\">Bobby McFerrin</a> leads it in his Circlesongs (1997): he gives each group a short part to repeat, adds them one by one, and sings over the top.</p>\n      <p><b>Where to start:</b> listen to In C. A good one is by Flock, a UK jazz collective: you can easily hear the figures pass from player to player. Maybe get a copy of the score from your local library or online, grab a coffee, and follow along. The score fits on a single page, plus one page of instructions.</p>";
+// The lights that do not explain themselves while you play.
+AFTER.lightsHelp = [
+  [["#e2762f", "beat"], "The light above loop", "Dim: the chosen player has a figure. It flashes each time the figure comes round. Nearly dark: no figure."],
+  [["#d23a2a", "steady"], "Loop turns red", "You are holding loop long enough to clear the figure. Let go now to keep it."],
+  [["white", "swell"], "A black key swelling", "A new length, waiting for the next L0 to begin."],
+  [["#d23a2a", "blink"], "A white key blinking red", "A muted player, while you hold CHOMPI or play."],
+  [["#4cb85c", "bar"], "A green, yellow or red bar", "You are holding K6: how many voices sound. Red: the CHOMPI is cutting the oldest notes short."],
+  [["#2c5aa0", "steady"], "The knob lights in four colours", "The switch is on all: the knobs act on everyone. Push it down to one."],
+  [["white", "flicker"], "A control flickering white", "This page is showing you what to touch next."],
+];
+// ---- The cheat sheet: every control on one page, after the lessons ----------------
+// The panel's controls left to right, each with what it does on its own, with CHOMPI
+// held and on all; the keyboard; then lengths, lights, instruments. Printable.
+LESSONS.push({ id: "sheet", name: "Cheat sheet", sheet: true });
+// The CHOMPI drawn above it: nothing to touch, the notes on the white keys, the lengths on the black.
+const SHEET_STEP = { touch: {}, white: "notes", black: "ratios", leds: {} };
+const SHEET_CTL = [
+  ["{switch}", [["one", "the knobs act on the chosen player"], ["all", "the knobs act on everyone"]]],
+  ["{chompi}", [["hold", "the players on the white keys, the length on the black keys"], ["+ white key", "choose that player"], ["+ the same key twice", "its instrument, on white keys 1 to 14"], ["+ hold one white, press another", "copy the figure there"], ["+ black key", "the length, from the next L0"]]],
+  ["{k1}", [["turn", "strike"], ["with CHOMPI", "shimmer"]]],
+  ["{k2}", [["turn", "brightness"], ["with CHOMPI", "feel: a looser player"]]],
+  ["{k3}", [["turn", "decay"], ["with CHOMPI", "prep: the instrument's preparation"]]],
+  ["{k4}", [["turn", "level"], ["with CHOMPI", "pan: left or right"]]],
+  ["{wheel}", [["turn", "octave, a step every few clicks"], ["with CHOMPI", "tempo: L0"], ["CHOMPI + push", "the tempo back to the start, 2 s"], ["with loop held", "kick the chosen player's figure later or earlier; the pull brings it back (on all: the pull)"], ["loop held + push", "glide home, back to its place (on all: everyone)"]]],
+  ["{play}", [["press", "start or stop everyone"], ["+ hold a white key", "listen to that player"], ["+ tap a white key", "mute or unmute that player"]]],
+  ["{loop}", [["press", "keep what you just played"], ["held + play", "clear the player (on all: everyone)"], ["with CHOMPI", "add to the figure"], ["with CHOMPI, hold 2 s", "clear everyone"]]],
+  ["{k6}", [["turn", "volume"], ["with CHOMPI", "room"], ["hold", "how many voices sound"]]],
+];
+const SHEET_ALL = "On <b>all</b>, K1 to K3 shift everyone's sound from where it is, K4 is everyone's level (with CHOMPI: the width), the black keys set the ensemble's tempo: every figure whole, faster or slower" + "; loop held + push the wheel puts every figure back where it was kept" + ".";
+const SHEET_BOXES = [
+  ["Lengths", `<p>Every player loops for its length times L0 (2 s at the start). A new length waits for the next L0, then the loop goes on from where it is.</p>
+    <p>A length never stretches the notes. Longer adds rest in the figure's silence; shorter takes the silence away first, then silences notes, which come back when it grows again.</p>
+    <p>A loop starts at its first note after the longest silence, so a figure played anywhere in L0, upbeats too, stays whole.</p>
+    <p>Copy a figure, give the copy another length: it drifts through its original.</p>`],
+  ["Lights", `<dl>
+    <dt>Wheel</dt><dd>a beat on every L0</dd>
+    <dt>Above loop</dt><dd>the chosen player's figure comes round; red while clearing</dd>
+    <dt>Keys</dt><dd>flash with the chosen player's notes</dd>
+    <dt>Turning a knob</dt><dd>its value in white across the keys</dd>
+    <dt>A black key swelling</dt><dd>a length waiting for the next L0</dd>
+    <dt>A white key blinking red</dt><dd>a muted player</dd>
+    <dt>Knob lights in four colours</dt><dd>the switch is on all</dd>
+    <dt>Flickering white</dt><dd>this page points at it</dd></dl>`],
+  ["Instruments", `<ul class="insts">${["Wood", "Marimba", "Amadinda", "Gangsa", "Mbira", "Kora", "Snare bar", "Muffled",
+    "Vibes", "Bell", "Hang", "Singing bowl", "Gong", "Glass"].map((n, i) =>
+    `<li><i style="--c:${PRESET_INK[SET[i]]}"></i><b>${i + 1}</b> ${n}</li>`).join("")}</ul>
+    <p>Hold {chompi} and tap a player's white key twice; then a white key 1 to 14 picks its instrument. Keys 1 to 8 are short, for rhythm; 9 to 14 ring long, for melodies.</p>`],
+  ["Start and stop", `<dl>
+    <dt>Restart CIRCLES</dt><dd>hold {chompi} with white keys 1 and 15 for 2 s, then let go</dd>
+    <dt>Sleep</dt><dd>hold {chompi}, {play} and {loop} while switching on</dd></dl>`],
+];
+
+// ---- Controls named in the text, drawn like the panel ----------------------------------
+// {chompi}, {w3}, {wheel}, {loop}, {play}, {k1}, {b:3/2}, {switch}. A glyph keeps the
+// punctuation after it on its line.
+const glyph = s => s.replace(/\{([\w:\/]+)\}([.,;:!?)]*)/g, (_, id, punct) => `<span class="gw">${glyph1(id)}${punct}</span>`);
+const glyph1 = id => {
+  if (id.startsWith("b:")) return `<span class="g"><span class="cap black">${id.slice(2)}</span></span>`;
+  if (id === "switch") return `<span class="g"><span class="cap switch" aria-hidden="true"></span>switch</span>`;
+  if (id === "chompi") return `<span class="g"><span class="cap chompi" aria-hidden="true"></span>CHOMPI</span>`;
+  if (/^w\d+$/.test(id)) return `<span class="g"><span class="cap key">${id.slice(1)}</span></span>`;
+  if (id === "wheel") return `<span class="g"><span class="cap wheel" aria-hidden="true"></span>wheel</span>`;
+  if (/^k\d$/.test(id)) return `<span class="g"><span class="cap knob" aria-hidden="true"></span>${id.toUpperCase()}</span>`;
+  return `<span class="g"><span class="cap ${id}" aria-hidden="true"></span>${id}</span>`;
+};
+
+// ---- The panel, to the CHOMPI's own proportions (1138 × 384, keycaps 64 square on a 70.4
+// pitch, ten gold-ringed LEDs along the top). The line art of the real panel runs along the
+// top and round the keybed. Only the LEDs light; pen marks show what to touch.
+const NS = "http://www.w3.org/2000/svg";
+const svg = document.createElementNS(NS, "svg");
+svg.setAttribute("viewBox", "-10 -72 1158 540"); svg.setAttribute("role", "img"); svg.classList.add("panel");
+const el = (tag, attrs, parent = svg) => { const e = document.createElementNS(NS, tag); for (const a in attrs) e.setAttribute(a, attrs[a]); parent.appendChild(e); return e; };
+const txt = (x, y, s, attrs = {}, parent = svg) => { const e = el("text", Object.assign({ x, y, "text-anchor": "middle" }, attrs), parent); e.textContent = s; return e; };
+const arcPath = (x, y, r, a0, a1) => { const p = a => [x + r * Math.sin(a * Math.PI / 180), y - r * Math.cos(a * Math.PI / 180)];
+  const [x0, y0] = p(a0), [x1, y1] = p(a1); return `M${x0.toFixed(1)} ${y0.toFixed(1)} A${r} ${r} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${x1.toFixed(1)} ${y1.toFixed(1)}`; };
+const defs = el("defs", {});
+const blur = el("filter", { id: "glow", x: "-150%", y: "-150%", width: "400%", height: "400%" }, defs);
+el("feGaussianBlur", { stdDeviation: 5 }, blur);
+const CAP = { chompi: "#ec7f86", wheel: "#a688d4", play: "#3fa8a2", loop: "#efbd3a" };
+const ROW = 128, KC = 64;
+const TOP_LEDS = [["l_chompi", 150, 51], ["l_k1", 254, 51], ["l_k2", 369, 51], ["l_k3", 483, 51], ["l_k4", 604, 51], ["l_w1", 712, 48], ["l_w2", 778, 48],
+  ["l_play", 846, 51], ["l_loop", 919, 51], ["l_k6", 1062, 62]];
+
+el("rect", { x: 0, y: 0, width: 1138, height: 384, rx: 16, class: "housing" });
+// line art: a bus along the top with a branch to every LED, a frame round the keys
+el("path", { d: "M34 20 H1104", class: "trace" });
+TOP_LEDS.forEach(([, x, y]) => el("path", { d: `M${x} 20 V${y - 12}`, class: "trace" }));
+[34, 1104].forEach(x => el("circle", { cx: x, cy: 20, r: 3.2, class: "node" }));
+el("rect", { x: 24, y: 184, width: 1090, height: 160, rx: 14, class: "trace" });
+el("path", { d: "M24 264 H14 V368 H1124 V264 H1114", class: "trace", "stroke-opacity": .5 });
+[[14, 14], [1124, 14], [14, 370], [1124, 370]].forEach(([x, y]) => el("circle", { cx: x, cy: y, r: 5, class: "screw" }));
+
+const ctl = {}, names = {};
+const add = (id, box, round, tag) => { ctl[id] = Object.assign(ctl[id] || {}, { box, round, tag }); };
+const name = (id, x) => names[id] = txt(x, -14, "", { class: "t-name" });
+const ledAt = (id, x, y, w, h, rx, ring) => {
+  const glow = el("rect", { x: x - 3, y: y - 3, width: w + 6, height: h + 6, rx: rx + 3, fill: "none", filter: "url(#glow)", opacity: 0 });
+  if (ring) el("circle", { cx: x + w / 2, cy: y + h / 2, r: w / 2 + 4, class: "ledring" });
+  el("rect", { x, y, width: w, height: h, rx, class: "ledwin" });
+  const lamp = el("rect", { x, y, width: w, height: h, rx, fill: "none", opacity: 0 });
+  (ctl[id] || (ctl[id] = {})).led = { glow, lamp };
+};
+TOP_LEDS.forEach(([id, x, y]) => ledAt(id, x - 8, y - 8, 16, 16, 8, true));
+// the speaker grille
+el("circle", { cx: 992, cy: 62, r: 13, class: "trace" });
+[-6, -2, 2, 6].forEach(d => el("line", { x1: 983, y1: 62 + d, x2: 1001, y2: 62 + d, class: "trace" }));
+// the switch (all up, one down) and the pink key with its face
+el("rect", { x: 66, y: ROW - 24, width: 18, height: 48, rx: 9, class: "sw-slot" });
+const lever = el("circle", { cx: 75, cy: ROW + 12, r: 7, class: "lever" });
+txt(46, ROW - 9, "all", { "text-anchor": "end", class: "t-panel" }); txt(46, ROW + 17, "one", { "text-anchor": "end", class: "t-panel" });
+add("switch", [66, ROW - 24, 18, 48], false, "top"); name("switch", 75);
+const chx = 150 - KC / 2, chy = ROW - KC / 2;
+el("rect", { x: chx, y: chy, width: KC, height: KC, rx: 9, fill: CAP.chompi, class: "capk", "stroke-width": 2 });
+[140, 160].forEach(x => { el("circle", { cx: x, cy: ROW - 6, r: 7, class: "eye" }); el("circle", { cx: x + 1.3, cy: ROW - 4.7, r: 3.2, class: "dark-fill" }); });
+el("path", { d: `M143 ${ROW + 14} Q150 ${ROW + 20} 157 ${ROW + 14}`, class: "dark-line", "stroke-width": 2, "stroke-linecap": "round" });
+add("chompi", [chx, chy, KC, KC], false, "top"); name("chompi", 150);
+const knob = (id, x) => {
+  el("circle", { cx: x, cy: ROW, r: 31, class: "knob-body" });
+  el("circle", { cx: x, cy: ROW, r: 22, class: "knob-cap" });
+  el("line", { x1: x, y1: ROW - 8, x2: x, y2: ROW - 19, class: "dark-line", "stroke-width": 2.5, "stroke-linecap": "round" });
+  add(id, [x - 41, ROW - 41, 82, 82], true, "top"); name(id, x);
+};
+[["k1", 254], ["k2", 369], ["k3", 483], ["k4", 604], ["k6", 1062]].forEach(([id, x]) => knob(id, x));
+el("circle", { cx: 741, cy: ROW, r: 59, fill: CAP.wheel, class: "capk", "stroke-width": 2 });
+el("circle", { cx: 741, cy: ROW + 30, r: 11, fill: "#fffaf0", "fill-opacity": .45, class: "capk", "stroke-opacity": .4 });
+add("wheel", [673, ROW - 68, 136, 136], true, "top"); name("wheel", 741);
+const pkey = (id, cx, draw) => {
+  el("rect", { x: cx - KC / 2, y: ROW - KC / 2, width: KC, height: KC, rx: 9, fill: CAP[id], class: "capk", "stroke-width": 1.8 });
+  draw(cx, ROW);
+  add(id, [cx - KC / 2, ROW - KC / 2, KC, KC], false, "top"); name(id, cx);
+};
+pkey("play", 846, (x, y) => { el("path", { d: `M${x - 9} ${y - 8} L${x + 1} ${y} L${x - 9} ${y + 8} Z`, class: "dark-fill" }); el("rect", { x: x + 4, y: y - 8, width: 3, height: 16, class: "dark-fill" }); el("rect", { x: x + 9, y: y - 8, width: 3, height: 16, class: "dark-fill" }); });
+pkey("loop", 919, (x, y) => { el("path", { d: arcPath(x, y, 9, 40, 330), class: "dark-line", "stroke-width": 2.6 }); el("path", { d: `M${x + 1} ${y - 14} L${x + 7} ${y - 9} L${x + 1} ${y - 4} Z`, class: "dark-fill", transform: `rotate(-12 ${x} ${y})` }); });
+
+const RATIOS = ["1/3", "1/2", "2/3", "3/4", "1", "5/4", "4/3", "3/2", "2", "3"];
+const NOTES = ["C3", "D3", "E3", "F3", "G3", "A3", "B3", "C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5"];
+const SOUNDS = ["wood", "marimba", "amadinda", "gangsa", "mbira", "kora", "snare", "muffled", "vibes", "bell", "hang", "bowl", "gong", "glass"];
+const OCTAVE = ["−2", "−1", "0", "+1", "+2"];
+const KX = i => 76 + i * 70.4, WY = 266, BY = 196;
+const whites = [], blacks = [];
+for (let i = 0; i < 15; i++) {
+  const x = KX(i) - KC / 2, id = "w" + (i + 1);
+  el("rect", { x, y: WY, width: KC, height: KC, rx: 8, class: "wkey" });
+  add(id, [x, WY, KC, KC], false, "below"); ledAt(id, KX(i) - 8, WY + 9, 16, 8, 3);
+  whites.push(txt(KX(i), WY + 47, "", { class: "t-wkey" }));
+  txt(KX(i), 362, String(i + 1), { class: "t-num" });
+}
+[0, 1, 3, 4, 5, 7, 8, 10, 11, 12].forEach((i, b) => {
+  const cx = (KX(i) + KX(i + 1)) / 2, x = cx - KC / 2, id = "r" + RATIOS[b];
+  el("rect", { x, y: BY, width: KC, height: KC, rx: 8, class: "bkey" });
+  add(id, [x, BY, KC, KC], false, "above"); ledAt(id, cx - 8, BY + 9, 16, 8, 3);
+  blacks.push(txt(cx, BY + 47, "", { class: "t-bkey" }));
+});
+const marks = el("g", {}), tags = el("g", {});
+// The step's controls in a spotlight: the rest of the panel fades behind the page.
+const spotMask = el("mask", { id: "spot", maskUnits: "userSpaceOnUse", x: -10, y: -72, width: 1158, height: 540 }, defs);
+const shade = el("rect", { x: -10, y: -72, width: 1158, height: 540, class: "shade", opacity: .62, mask: "url(#spot)" });
+const GROUP = {
+  white: Object.keys(ctl).filter(id => /^w\d+$/.test(id)),
+  black: Object.keys(ctl).filter(id => /^r/.test(id)),
+  sounds: Array.from({ length: 10 }, (_, i) => "w" + (i + 1)),
+  octave: ["r1/3", "r1/2", "r2/3", "r3/4", "r1"],
+};
+GROUP.keys = GROUP.meter = [...GROUP.white, ...GROUP.black];
+const LABELS = {
+  one: { switch: "switch", chompi: "CHOMPI", k1: "K1 strike", k2: "K2 brightness", k3: "K3 decay", k4: "K4 level", wheel: "wheel: octave", play: "play", loop: "loop", k6: "K6 volume" },
+  oneC: { k1: "shimmer", k2: "feel", k3: "prep", k4: "pan", wheel: "wheel: tempo", k6: "room" },
+  all: { k1: "all: strike", k2: "all: brightness", k3: "all: decay", k4: "all: level" },
+  allC: { k1: "all: shimmer", k2: "all: feel", k3: "all: prep", k4: "all: width", wheel: "wheel: tempo", k6: "room" },
+};
+// A pen mark round what to touch, as a teacher draws on a photo: a ring that overshoots
+// where the pen started, and a few handwritten words. Nothing on it can be clicked.
+const VERB = { hold: "Hold", press: "Press", turn: "Turn", play: "Play", watch: "Watch", "tap twice": "Tap twice", "hold 2 s": "Hold for 2 s", "push up": "Push up", "push down": "Push down" };
+const CTL_NAME = { chompi: "CHOMPI", keys: "the keys", wheel: "the wheel", play: "play", loop: "loop", switch: "the switch", k1: "K1", k2: "K2", k3: "K3", k4: "K4", k6: "K6" };
+const ctlName = id => CTL_NAME[id] || (/^w/.test(id) ? id.slice(1) : /^r/.test(id) ? id.slice(1) : id);
+function penWords(id, w, k, alt) {
+  const [v, ...rest] = (VERB[w] || w).toLowerCase().split(" ");
+  const what = id === "keys" && w === "play" ? "a few keys" : ctlName(id);
+  return `${k ? (alt ? "or " : "then ") : ""}${v} ${what}${rest.length ? " " + rest.join(" ") : ""}`;
+}
+function penRing(cx, cy, rx, ry, seed, round) {
+  // a superellipse: squarish round a key, a circle round a knob; it runs on past its start
+  const pts = [], a0 = -2.3 + seed * .7, n = 56, e = round ? 1 : 2 / 4.5;
+  const pw = v => Math.sign(v) * Math.pow(Math.abs(v), e);
+  for (let i = 0; i <= n; i++) {
+    const t = i / n, a = a0 + t * (Math.PI * 2 + .45);
+    const wob = 1 + .018 * Math.sin(3 * a + seed * 2) + .025 * t;
+    pts.push([cx + rx * wob * pw(Math.cos(a)), cy + ry * wob * pw(Math.sin(a))]);
+  }
+  return "M" + pts.map(p => p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" L");
+}
+let penRows;
+const WATCH_BOX = { wheel: [700, 38, 90, 20] };
+function mark(ids, id, word, k, next, alt, own) {
+  const bs = word === "watch" && WATCH_BOX[id] ? [WATCH_BOX[id]] : ids.map(i => ctl[i].box);
+  const x0 = Math.min(...bs.map(b => b[0])), y0 = Math.min(...bs.map(b => b[1]));
+  const x1 = Math.max(...bs.map(b => b[0] + b[2])), y1 = Math.max(...bs.map(b => b[1] + b[3]));
+  const single = ids.length === 1;
+  // the spotlight: the control only a little larger (a knob in a circle), with its
+  // LED only when the step is to watch the lights
+  const spotRound = single && word !== "watch" && !!ctl[ids[0]].round;
+  const top = word === "watch" && y0 < 190 ? Math.min(34, y0 - 7) : y0 - 7;
+  if (spotRound) el("circle", { cx: (x0 + x1) / 2, cy: (y0 + y1) / 2, r: Math.max(x1 - x0, y1 - y0) / 2 + 7, fill: "#000" }, spotMask);
+  else el("rect", { x: x0 - 7, y: top, width: x1 - x0 + 14, height: y1 - top + 7, rx: 12, fill: "#000" }, spotMask);
+  const g = el("g", { opacity: next ? 1 : .35 }, marks);
+  const round = single && word !== "watch" && !!ctl[ids[0]].round;
+  const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, pad = round ? -2 : single ? 6 : 9;
+  const ring = el("path", { d: penRing(cx, cy, (x1 - x0) / 2 + pad, (y1 - y0) / 2 + pad, k, round), class: "pen-l", pathLength: 1 }, g);
+  if (!reduce) { ring.style.strokeDasharray = 1; ring.style.strokeDashoffset = 1; ring.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { duration: 520, delay: 120 + k * 260, easing: "cubic-bezier(.5,0,.3,1)", fill: "forwards" }); }
+  if (!word) return;
+  const words = own || penWords(id, word, k, alt), size = 34, wd = words.length * size * .42;
+  const up = single && ctl[ids[0]].tag === "top";
+  const row = up ? "up" : "down";
+  let lx = Math.min(Math.max(cx, wd / 2 + 4), 1134 - wd / 2);
+  for (const [a, b] of penRows[row]) if (lx - wd / 2 < b + 16 && lx + wd / 2 > a - 16) lx = b + 16 + wd / 2;
+  penRows[row].push([lx - wd / 2, lx + wd / 2]);
+  const ly = up ? -30 : 432;
+  const t = txt(lx, ly, words, { class: "pen-t" }, g);
+  if (up) {
+    const ay0 = ly + 10, ay1 = y0 - 8 - 4, mx = (lx + cx) / 2 + 18;
+    el("path", { d: `M${lx} ${ay0} Q${mx} ${(ay0 + ay1) / 2} ${cx} ${ay1}`, class: "pen-a" }, g);
+    el("path", { d: `M${cx - 9} ${ay1 - 12} L${cx} ${ay1} L${cx + 10} ${ay1 - 10}`, class: "pen-a" }, g);
+  }
+  if (!reduce) g.animate([{ opacity: 0 }, { opacity: next ? 1 : .35 }], { duration: 300, delay: 380 + k * 260, fill: "backwards" });
+}
+// The ten top LEDs, from the firmware's DrawLeds.
+function topLeds(st, lesson) {
+  const col = st.preset !== undefined ? PRESET_INK[st.preset] : playerInk(lesson, st.sel + 1), m = {};
+  m.l_chompi = [col, 1];
+  ["l_k1", "l_k2", "l_k3", "l_k4"].forEach((id, n) => m[id] = [st.all ? [PRESET_INK[0], PRESET_INK[3], PRESET_INK[8], PRESET_INK[2]][n] : col, 1]);
+  if (st.running) { m.l_w1 = m.l_w2 = [LED_WHITE, .6]; m.l_play = ["#4cb85c", .6]; }
+  m.l_loop = [col, st.loop ? .45 : .1];
+  m.l_k6 = [LED_WHITE, .4];
+  return m;
+}
+const lights = el("g", {});
+for (const id in ctl) if (ctl[id].led) { lights.appendChild(ctl[id].led.glow); lights.appendChild(ctl[id].led.lamp); }
+function paint(step, n, lesson, active = -1) {
+  svg.appendChild(shade); svg.appendChild(lights); svg.appendChild(marks); svg.appendChild(tags);
+  marks.replaceChildren(); tags.replaceChildren();
+  spotMask.replaceChildren(el("rect", { x: -10, y: -72, width: 1158, height: 540, fill: "#fff" }, spotMask));
+  const touch = step.touch || Object.fromEntries((step.on || []).map(id => [id, ""]));
+  const ids = Object.keys(touch);
+  penRows = { up: [], down: [] };
+  const alt = / or /.test(step.do || "") && new Set(Object.values(touch)).size === 1;
+  ids.forEach((id, k) => mark(GROUP[id] || [id], id, touch[id], k, alt || active < 0 || active === k || touch[id] === "watch", alt, step.pen && step.pen[id]));
+  shade.setAttribute("opacity", ids.length ? .62 : 0);
+  const st = Object.assign({ sel: 0, running: true, loop: false }, lesson && lesson.state, step.state, { all: !!step.all });
+  const leds = Object.assign(topLeds(st, lesson), step.leds || {});
+  for (const id in leds) leds[id] = inkOf(leds[id], lesson);
+  for (const id in ctl) {
+    const L = ctl[id].led; if (!L) continue;
+    const v = leds[id];
+    L.lamp.setAttribute("fill", v ? v[0] : "none"); L.lamp.setAttribute("opacity", v ? .3 + .7 * v[1] : 0);
+    L.glow.setAttribute("fill", v ? v[0] : "none"); L.glow.setAttribute("opacity", v && v[1] > .5 ? .9 * v[1] : 0);
+  }
+  const w = step.white === undefined ? "" : step.white, b = step.black === undefined ? "ratios" : step.black;
+  whites.forEach((t, i) => t.textContent = w === "notes" ? NOTES[i] : w === "sounds" ? (SOUNDS[i] || "") : "");
+  whites.forEach(t => t.style.fontSize = w === "sounds" ? "11px" : "");
+  blacks.forEach((t, i) => t.textContent = b === "ratios" ? RATIOS[i] : b === "octave" ? (OCTAVE[i] || "") : "");
+  const lab = Object.assign({}, LABELS.one, step.all ? LABELS.all : {}, step.layer === "chompi" ? (step.all ? LABELS.allC : LABELS.oneC) : {});
+  for (const id in names) {
+    names[id].textContent = lab[id];
+    names[id].setAttribute("opacity", touch[id] ? 0 : .8);
+  }
+  lever.setAttribute("cy", ROW + (step.all ? -12 : 12));
+  svg.setAttribute("aria-label", `The CHOMPI panel, step ${n}: ` + Object.entries(touch).map(([id, w]) => `${w || "use"} ${id}`).join(", "));
+}
+
+// ---- The CHOMPI over USB-MIDI (firmware/chompi-meter/PROTOCOL.md) -----------------
+// The page says hello once a second; meter answers with its state, its channels and
+// what you press and turn. A lesson can set the CHOMPI up, a step lights its controls
+// there and is done when the CHOMPI shows it was done.
+const HEAD = [0x7D, 0x4D, 0x54];
+const ID = { chompi: 25, play: 26, loop: 27, k1: 28, k2: 29, k3: 30, k4: 31, wheel: 32, k6: 33, switch: 34 };
+const WHITE_ID = [0, 2, 4, 5, 7, 9, 11, 12, 14, 16, 17, 19, 21, 23, 24];
+const BLACK_ID = [1, 3, 6, 8, 10, 13, 15, 18, 20, 22];
+const ctlId = name => name in ID ? ID[name]
+  : /^w\d+$/.test(name) ? WHITE_ID[Number(name.slice(1)) - 1]
+  : /^r/.test(name) ? BLACK_ID[RATIO_IDS.indexOf(name.slice(1))] : undefined;
+const RATIO = Object.fromEntries(RATIO_IDS.map((r, i) => [r, i]));
+const PRESET = { wood: 0, marimba: 1, vibes: 2, bronze: 3, glass: 4, bell: 5, gong: 6, felt: 7, snare: 8, muffled: 9,
+  amadinda: 10, gangsa: 11, mbira: 12, kora: 13, hang: 14, bowl: 15, piano: 19 };
+
+// Figures on one pulse: [pulse, key]. L0 is eight pulses, so a player of length 3/4 has
+// six, 3/2 twelve. The key is the key's note (C3 = 48 .. C5 = 72); the octave is the player's.
+const FIG = {
+  A: [[0, 60], [2, 64], [3, 67], [5, 64], [6, 62]],              // 8 pulses
+  B: [[0, 48], [3, 55], [6, 52]],                                // 8
+  B12: [[0, 48], [3, 55], [6, 52], [9, 55]],                    // 12 pulses (×3/2)
+  C: [[2, 67], [3, 69], [6, 72]],                               // 8
+  D6: [[0, 55], [3, 60]],                                        // 6 (×3/4)
+  E16: [[3, 72], [7, 69], [11, 67], [15, 69]],                  // 16 (×2)
+  F24: [[0, 72], [12, 67]],                                      // 24 (×3)
+};
+// What each lesson starts with: players (1-based) with instrument, figure, length and
+// octave; the chosen player; whether it runs.
+const SETUP = {
+  play: { players: [], sel: 1, running: false },
+  loop: { players: [], sel: 1 },
+  ratios: { players: [[1, "wood", "A"], [2, "marimba"], [3, "vibes"]], sel: 1 },
+  walk: { players: [[1, "wood", "A"], [2, "marimba", "B"], [3, "vibes", null, "1", 1], [4, "bronze"]], sel: 1 },
+  sound: { players: [[1, "wood", "A"], [2, "marimba", "B12", "3/2"], [3, "vibes", "C"], [4, "bronze", "D6", "3/4"]], sel: 3 },
+  ensemble: { players: [[1, "wood", "A"], [2, "marimba", "B12", "3/2"], [3, "vibes", "C"], [4, "bronze", "D6", "3/4"],
+    [5, "glass", "E16", "2"], [6, "bell", "F24", "3"]], sel: 1 },
+};
+const RATIO_VALUE = { "1/3": 1 / 3, "1/2": .5, "2/3": 2 / 3, "3/4": .75, "1": 1, "5/4": 1.25, "4/3": 4 / 3, "3/2": 1.5, "2": 2, "3": 3 };
+
+// Done when ... (s: the state now, c: the channels, b: both as the step began, x: what
+// happened since, counted).
+const sameNotes = (p, q) => JSON.stringify(p.notes) === JSON.stringify(q.notes);
+const CHECK = {
+  play: [
+    (s, c, b, x) => x.keys >= 2,
+    s => s.held & 1,
+    s => s.sel === 2,
+    (s, c) => c[2].preset === 2,
+    (s, c, b) => c[2].oct !== b.c[2].oct,
+  ],
+  loop: [
+    (s, c, b, x) => x.hits >= 4,
+    (s, c) => c[0].notes.length > 0,
+    (s, c, b) => c[0].notes.length > b.c[0].notes.length && b.c[0].notes.length > 0,
+    (s, c, b, x) => x.loop && c[0].notes.length > 0 && !sameNotes(c[0], b.c[0]),
+    (s, c, b, x) => x.stopped && s.running,
+    (s, c, b) => b.c[0].notes.length > 0 && c[0].notes.length === 0,
+  ],
+  ratios: [
+    s => s.held & 1,
+    (s, c) => s.sel === 1 && c[1].ratio === RATIO["3/4"],
+    (s, c) => c[1].ratio === RATIO["3/4"] && c[1].notes.length > 0,
+    (s, c) => c[2].ratio === RATIO["5/4"] && c[2].notes.length > 0,
+    (s, c) => c[0].ratio === RATIO["5/4"] && c[0].pend < 0 && c[0].notes.length > 0,
+    (s, c, b) => Math.abs(s.l0 / b.s.l0 - 1) > .05,
+  ],
+  walk: [
+    (s, c) => c[2].notes.length > 0 && sameNotes(c[2], c[0]),
+    s => s.listen & 4,
+    (s, c) => c[3].notes.length > 0 && sameNotes(c[3], c[2]),
+    (s, c) => c[3].ratio === RATIO["5/4"] && c[3].pend < 0 && c[3].notes.length > 0,
+    (s, c, b) => c[2].notes.length > 0 && c[2].notes.length === b.c[2].notes.length && !sameNotes(c[2], b.c[2]),
+    (s, c, b) => c[0].notes.length > 0 && !sameNotes(c[0], b.c[0]),
+  ],
+  sound: [
+    (s, c, b) => c[2].strike !== b.c[2].strike,
+    (s, c, b) => c[2].bright !== b.c[2].bright && c[2].decay !== b.c[2].decay,
+    (s, c, b) => c[2].feel !== b.c[2].feel,
+    (s, c, b) => c[2].shimmer !== b.c[2].shimmer && c[2].buzz !== b.c[2].buzz,
+    (s, c, b) => c[2].level !== b.c[2].level && c[2].place !== b.c[2].place,
+  ],
+  ensemble: [
+    s => s.all,
+    s => s.all && s.ens === RATIO["1/2"],
+    (s, c, b) => c.some((x, i) => x.strike !== b.c[i].strike || x.bright !== b.c[i].bright || x.decay !== b.c[i].decay),
+    (s, c, b) => s.width !== b.s.width,
+    s => s.muted & 16,
+    (s, c, b) => s.room !== b.s.room,
+    s => !s.all,
+  ],
+};
+
+const link = { out: null, ins: [], st: null, ch: [], timer: 0, alive: 0, step: null, keys: new Set(), mask: -1n };
+const linkTag = document.getElementById("linkTag"), linkBtn = document.getElementById("linkBtn"), linkLoad = document.getElementById("linkLoad");
+const linkSay = (t, on) => { linkTag.textContent = t; document.body.dataset.link = on ? "on" : ""; };
+const send = (cmd, payload = []) => { if (link.out) link.out.send([0xF0, ...HEAD, cmd, ...payload.map(v => v & 127), 0xF7]); };
+
+async function connect(demo) {
+  let access;
+  link.demo = demo === true;
+  link.unheard = 0;
+  if (link.access) link.access.onstatechange = null;
+  if (link.demo) access = demoMeter();
+  else {
+    if (!navigator.requestMIDIAccess) { linkSay("This browser has no MIDI · use Chrome or Edge"); return; }
+    try { access = await navigator.requestMIDIAccess({ sysex: true }); }
+    catch (e) { linkSay(window.top !== window ? "MIDI is blocked in this frame · open the page on its own" : "MIDI not allowed"); return; }
+  }
+  linkSay("Looking for CIRCLES …");
+  // Whichever output answers the hello is the CHOMPI.
+  const listen = e => {
+    // (A log in the browser's console, for finding out why a connection drops.)
+    if (e) console.info(new Date().toISOString(), "MIDI", e.port.type, e.port.name, e.port.state, e.port.connection);
+    link.ins.forEach(i => i.onmidimessage = null);
+    link.ins = [...access.inputs.values()];
+    link.ins.forEach(i => i.onmidimessage = e => { link.lastIn = i; receive(e.data); });
+  };
+  listen();
+  access.onstatechange = listen;
+  clearInterval(link.timer);
+  link.timer = setInterval(() => {
+    const outs = [...access.outputs.values()];
+    if (!link.out || ![...access.outputs.values()].includes(link.out)) outs.forEach(o => o.send([0xF0, ...HEAD, 1, 0xF7]));
+    else send(1);
+    if (link.st && performance.now() - link.alive > 3000) { console.info(new Date().toISOString(), "CIRCLES: no state for 3 s"); link.st = null; link.out = null; linkSay("CIRCLES is gone · switch the CHOMPI on and plug it in"); }
+    else if (!link.st && !link.out) {
+      linkSay(outs.length ? `No answer from ${outs.map(o => o.name).join(", ")} · is CIRCLES running on the CHOMPI?` : "No MIDI device · plug the CHOMPI in");
+      // Still nothing after 10 s: ask the browser for its MIDI anew (it can hold on
+      // to a port that has gone).
+      if (!link.demo && ++link.unheard >= 10) { console.info(new Date().toISOString(), "CIRCLES: asking for MIDI again"); connect(); }
+    } else link.unheard = 0;
+  }, 1000);
+  link.access = access;
+  linkBtn.hidden = demoBtn.hidden = true;
+}
+const demoBtn = document.getElementById("demoBtn");
+linkBtn.onclick = () => connect();
+demoBtn.onclick = () => connect(true);
+
+// A pretend CHOMPI behind a pretend MIDI port, for reading the lessons without one:
+// it answers like meter does, takes the lessons' setups and turns the loops (silently).
+// Nothing on it can be pressed, so the steps don't complete on their own.
+function demoMeter() {
+  const ch = Array.from({ length: 15 }, (_, c) => ({ preset: SET[c % 14], oct: 0, ratio: 4, notes: [] }));
+  const st = { sel: 0, l0: 2000, running: true };
+  const input = { name: "CHOMPI (demo)", onmidimessage: null };
+  let t0 = performance.now(), last = ch.map(() => 0), beats = 0, lastL0 = 0, timer = 0;
+  const msg = (cmd, p) => input.onmidimessage && input.onmidimessage({ data: [0xF0, ...HEAD, cmd, ...p.map(v => v & 127), 0xF7] });
+  const len = c => st.l0 / 1000 * (c < 0 ? 1 : RATIO_VALUE[RATIO_IDS[ch[c].ratio]]);
+  const pos = c => st.running ? ((performance.now() - t0) / 1000 / len(c)) % 1 : 0;
+  const q14 = x => { const v = Math.min(16383, Math.floor(x * 16384)); return [v & 127, v >> 7]; };
+  const voices = () => ch.reduce((n, x) => n + Math.min(x.notes.length, 3), 0);
+  const state = () => msg(0x42, [st.sel, (st.running ? 1 : 0) | 4, 4, 0, st.l0 & 127, st.l0 >> 7, 102, 40, 64, 64, 64, 64, 64, 64, 64, 64,
+    0, 0, 0, 0, 0, 0, 0, 20 + 3 * voices(), voices(), 0]);
+  const channel = c => { const x = ch[c]; msg(0x43, [c, x.preset, x.oct + 2, x.ratio, 0, 102, 64, 64, 64, 64, 64, 64, 64, x.notes.length, ...x.notes.flatMap(([p, k]) => [p & 127, p >> 7, k])]); };
+  const restart = () => { t0 = performance.now(); last = ch.map(() => 0); lastL0 = 0; };
+  const tick = () => {
+    if (!st.running) return;
+    msg(0x45, [...q14(pos(-1)), ...ch.flatMap((_, c) => q14(pos(c)))]);
+    const p0 = pos(-1);
+    if (p0 < lastL0) msg(0x44, [5, 0, ++beats & 63]);
+    lastL0 = p0;
+    ch.forEach((x, c) => {
+      const p = pos(c), a = last[c];
+      x.notes.forEach(([ph, k]) => { const f = ph / 16384; if (a <= p ? f >= a && f < p : f >= a || f < p) msg(0x44, [6, c, k + 12 * x.oct]); });
+      last[c] = p;
+    });
+  };
+  const out = { name: "CHOMPI (demo)", send(d) {
+    const cmd = d[4], p = d.slice(5, d.length - 1);
+    if (cmd === 1) {
+      if (!timer) { timer = setInterval(tick, 50); setInterval(state, 500); }
+      msg(0x41, [1, 15, 10]); state(); ch.forEach((_, c) => channel(c));
+    } else if (cmd === 3) {
+      const n = p[7], notes = [];
+      for (let i = 0; i < n; i++) notes.push([p[8 + 3 * i] | p[9 + 3 * i] << 7, p[10 + 3 * i]]);
+      Object.assign(ch[p[0]], { preset: p[1], oct: p[2] - 2, ratio: p[3], notes });
+      channel(p[0]);
+    } else if (cmd === 4) {
+      st.sel = p[0]; if (p[1] | p[2] << 7) st.l0 = p[1] | p[2] << 7; st.running = !!p[3];
+      restart(); state();
+    } else if (cmd === 5) {
+      ch.forEach((x, c) => Object.assign(x, { preset: SET[c % 14], oct: 0, ratio: 4, notes: [] }));
+      ch.forEach((_, c) => channel(c)); state();
+    }
+  } };
+  return { inputs: new Map([[1, input]]), outputs: new Map([[1, out]]), onstatechange: null };
+}
+
+function receive(d) {
+  if (d[0] !== 0xF0 || d[1] !== HEAD[0] || d[2] !== HEAD[1] || d[3] !== HEAD[2]) return;
+  const cmd = d[4], p = d.slice(5, d.length - 1);
+  link.alive = performance.now();
+  if (!link.out) {
+    // Anything from meter will do, not only the answer to a hello: an answer can get
+    // lost on the way, and meter keeps talking for 3 s after the last hello. The
+    // message came in on one input; its output has the same name.
+    const outs = [...link.access.outputs.values()];
+    link.out = outs.find(o => link.lastIn && o.name === link.lastIn.name) || outs.find(o => /chompi/i.test(o.name)) || outs[0];
+    linkSay(link.demo ? "demo · a pretend CHOMPI" : "CHOMPI connected · CIRCLES", true);
+    link.mask = -1n;
+    linkStep();
+  }
+  if (cmd === 0x42) {
+    const q = v => v / 127, bits = i => p[i] | p[i + 1] << 7 | p[i + 2] << 14;
+    link.st = { sel: p[0], running: !!(p[1] & 1), all: !!(p[1] & 2), sounds: !!(p[1] & 4), ens: p[2], pend: p[3] - 1,
+      l0: p[4] | p[5] << 7, vol: p[6], room: p[7], width: p[8], gain: p[9], off: [...p.slice(10, 16)],
+      muted: bits(16), listen: bits(19), held: p[22], load: p[23], voices: p[24], shed: p[25] };
+    if (p.length > 25) {
+      // How busy the CHOMPI is, in the header; cut voices count since connecting.
+      if (link.shed0 === undefined) link.shed0 = p[25];
+      const cut = (p[25] - link.shed0 + 128) % 128;
+      linkLoad.textContent = `CPU ${Math.round(p[23] / 127 * 100)}% · ${p[24]} voices${cut ? ` · ${cut} cut` : ""}${link.usbResets ? ` · USB restarted ${link.usbResets}×` : ""}${link.usbLent ? ` · USB lent to the charger ${link.usbLent}×` : ""}${link.misreads ? ` · keys misread ${link.misreads}×` : ""}`;
+      linkLoad.dataset.level = p[23] > 108 ? "high" : p[23] > 76 ? "mid" : "";
+    }
+    seen();
+    hint();
+  } else if (cmd === 0x43) {
+    const n = p[13], notes = [];
+    for (let i = 0; i < n; i++) notes.push([p[14 + 3 * i] | p[15 + 3 * i] << 7, p[16 + 3 * i]]);
+    notes.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    link.ch[p[0]] = { preset: p[1], oct: p[2] - 2, ratio: p[3], pend: p[4] - 1, level: p[5], place: p[6],
+      strike: p[7], bright: p[8], decay: p[9], shimmer: p[10], feel: p[11], buzz: p[12], notes };
+    seen();
+  } else if (cmd === 0x45) {
+    liveClock(p);
+  } else if (cmd === 0x44) {
+    const [kind, id] = p;
+    if (kind === 6) { liveNote(id, p[2]); return; }
+    // CHOMPI + play: the player leaves the lesson. The CHOMPI's lights stay out
+    // until we send a hint of none (hint() does, with no step); choosing a step
+    // on the page follows it again.
+    if (kind === 7) { link.step = null; link.left = true; hint(); linkSay("lesson left · choose a step to follow it again", true); return; }
+    if (kind === 5) { live.gong = 1; link.beatAt = performance.now(); }
+    if (kind === 1 && id < 25) link.keys.add(id);
+    if (kind === 2 && id < 25) link.keys.delete(id);
+    const x = link.step && link.step.x;
+    if (!x) { hint(); return; }
+    if (kind === 1 && id < 25 && !(link.st && link.st.held & 1)) {
+      x.keys++;
+      // On the beat: within 0.3 s of a flash, before or after.
+      const l0 = link.st ? link.st.l0 : 2000, d = (performance.now() - (link.beatAt || -1e9)) % l0;
+      if (Math.min(d, l0 - d) < 300) x.hits = (x.hits || 0) + 1;
+    }
+    if (kind === 1 && id === ID.loop) x.loop = true;
+    if (kind === 5) x.beats++;
+    seen();
+    hint();
+  }
+}
+
+// The step being done: as it began, and what happened since.
+const ready = () => link.st && link.ch.length === 15 && link.ch.every(Boolean);
+const copy = () => JSON.parse(JSON.stringify({ s: link.st, c: link.ch }));
+// The step's actions in order; the next one is the first control still to be held
+// down, or once everything to hold is held, the first of the rest.
+function activeAction(s) {
+  const acts = Object.entries(s.touch || {});
+  const held = id => link.st && (id === "chompi" ? link.st.held & 1 : id === "play" ? link.st.held & 2 : id === "loop" ? link.st.held & 4 : link.keys.has(ctlId(id)));
+  const h = acts.findIndex(([id, w]) => w === "hold" && !held(id));
+  if (h >= 0) return h;
+  const r = acts.findIndex(([id, w]) => w !== "hold" && w !== "watch");
+  return r;
+}
+function linkStep() {
+  const cur = CHAPTERS[current];
+  const L = cur && cur.steps ? cur : null;
+  const s = L ? L.steps[L.at] : null;
+  if (link.left && s) { link.left = false; linkSay("CHOMPI connected · CIRCLES", true); }
+  link.step = s ? { L, j: L.at, base: ready() ? copy() : null, x: { keys: 0, beats: 0, loop: false, stopped: false } } : null;
+  hint();
+  seen();
+}
+// Light the next control on the CHOMPI (the keys as a group stay dark), and number it on the page.
+function hint() {
+  const t = link.step, s = t && t.L.steps[t.j];
+  // A step that is done points at nothing on the CHOMPI any more.
+  const done = t && t.L.done && t.L.done.has(t.j);
+  const a = s && link.out && !done ? activeAction(s) : -1;
+  if (t && a !== t.active) { t.active = a; paint(s, t.j + 1, t.L, a); t.L.showActive(a); }
+  const act = s && a >= 0 ? Object.keys(s.touch)[a] : null, id = act ? ctlId(act) : undefined;
+  const mask = id === undefined ? 0n : 1n << BigInt(id);
+  if (mask === link.mask) return;
+  link.mask = mask;
+  send(2, [0, 1, 2, 3, 4].map(i => Number((mask >> BigInt(7 * i)) & 127n)));
+}
+// The switch in the wrong place for the step (one, or all for the ensemble's
+// steps): say so, unless the step is about the switch itself.
+function switchNote() {
+  const t = link.step, s = t && t.L.steps[t.j];
+  const wrong = s && ready() && !("switch" in s.touch) && link.st.all !== !!s.all;
+  const text = !wrong ? "" : link.st.all ? "Your switch is on all. Push it down to one for this step."
+                                        : "Your switch is on one. Push it up to all for this step.";
+  document.querySelectorAll(".swnote").forEach(p => { p.hidden = !text; p.textContent = text; });
+}
+function seen() {
+  switchNote();
+  const t = link.step;
+  if (!t || !ready()) return;
+  if (!t.base) t.base = copy();
+  if (!link.st.running) t.x.stopped = true;
+  const check = (CHECK[t.L.id] || [])[t.j];
+  if (!check || (t.L.done || (t.L.done = new Set())).has(t.j)) return;
+  if (check(link.st, link.ch, t.base, t.x)) { t.L.done.add(t.j); t.L.mark(t.j); hint(); }
+}
+
+// A lesson's start on the CHOMPI: power-on, its players, then together from the start.
+// Send a set of players to the CHOMPI: power-on, each player, then the ensemble
+// (selected, tempo, play). A player's figure is a name from FIG or a list of its own;
+// its level is .8 unless given.
+function loadSetup(S) {
+  if (!S || !link.out) return false;
+  send(5);
+  // Spread the players out from the middle, neighbours on opposite sides; the
+  // more players, the wider (a pan is -1 left .. 1 right, sent as 64 ± 63).
+  const N = S.players.length;
+  S.players.forEach(([n, inst, fig, ratio = "1", oct = PRESET[inst] === 6 ? -1 : 0, level = .8], k) => {
+    const c = n - 1, side = k % 2 ? -1 : 1, out = N > 1 ? Math.ceil(k / 2) / Math.ceil((N - 1) / 2) : 0;
+    const pan = N > 1 ? side * Math.min(.8, .1 * N + .1) * out : 0;
+    const pulses = 8 * RATIO_VALUE[ratio];
+    const notes = (Array.isArray(fig) ? fig : FIG[fig] || []).flatMap(([pulse, key]) => { const ph = Math.round(pulse / pulses * 16384); return [ph & 127, ph >> 7, key]; });
+    send(3, [c, PRESET[inst], oct + 2, RATIO[ratio], Math.round(level * 127), Math.round(64 + 63 * pan), 0, notes.length / 3, ...notes]);
+  });
+  const ms = S.l0 || 2000;
+  send(4, [S.sel - 1, ms & 127, ms >> 7, S.running === false ? 0 : 1]);
+  return true;
+}
+function setUp(L) {
+  if (!loadSetup(SETUP[L.id])) return;
+  L.done = new Set();
+  L.select(0);
+}
+
+// ---- Rings: the drawing shared by the introduction, the live porthole and the full view --
+// A model: the L0 core (where it is, how much it swells), and a ring per player with its
+// colour, where it is, its notes (phase and flash), notes played by hand (ghosts).
+function drawRings(g, w, M) {
+  const m = w / 2, tau = Math.PI * 2, top = -Math.PI / 2, dark = TK.dark;
+  g.clearRect(0, 0, w, w);
+  const n = M.rings.length, r0 = w * .13, rIn = w * .245, rOut = w * .465;
+  const gap = n > 1 ? Math.min(w * .085, (rOut - rIn) / (n - 1)) : 0;
+  if (M.ripple != null && M.ripple < 1) {
+    const q = M.ripple, rr = r0 + (rOut + w * .03 - r0) * (1 - Math.pow(1 - q, 2.2));
+    g.beginPath(); g.arc(m, m, rr, 0, tau); g.strokeStyle = TK["accent-hi"]; g.globalAlpha = (1 - q) * .75; g.lineWidth = 1 + 5 * (1 - q); g.stroke(); g.globalAlpha = 1;
+  }
+  const rev = M.reveal == null ? 1 : M.reveal;
+  const coreR = r0 * Math.max(0, Math.min(1, rev * 3)) * (1 + .07 * Math.max(0, M.swell || 0));
+  g.beginPath(); g.arc(m, m, coreR, 0, tau); g.fillStyle = TK.core; g.fill();
+  if (dark) { g.strokeStyle = TK.trace; g.lineWidth = 1.2; g.stroke(); }
+  if (M.running) { g.beginPath(); g.arc(m, m, r0 * .78, top, top + tau * M.pos); g.strokeStyle = TK["accent-hi"]; g.lineWidth = Math.max(2, w * .006); g.lineCap = "round"; g.stroke(); g.lineCap = "butt"; }
+  g.fillStyle = TK["core-ink"]; g.textAlign = "center"; g.textBaseline = "middle";
+  g.font = `500 ${Math.round(w * .046)}px "Martian Mono", monospace`; if (rev > .3) g.fillText("L0", m, m + w * .003);
+  const dot = Math.max(3.4, w * .0115);
+  M.rings.forEach((R, k) => {
+    const r = rIn + k * gap, a = top + R.pos * tau, show = Math.max(0, Math.min(1, (rev * 1.5 - (n > 1 ? k / (n - 1) : 0) * .32) / .9)); // the rings come in one after another, all of them by the end
+    const al = R.muted ? .3 : 1;
+    g.beginPath(); g.arc(m, m, r, top, top + tau * show); g.strokeStyle = TK.ink; g.globalAlpha = R.bold ? .55 : .17; g.lineWidth = R.bold ? 1.6 : 1;
+    g.setLineDash(R.muted || R.empty ? [3, 5] : []); g.stroke(); g.setLineDash([]); g.globalAlpha = 1;
+    if (show < 1) return;
+    if (M.running && !R.empty) {
+      const len = tau * .17, segs = 18;
+      for (let s = 0; s < segs; s++) {
+        g.beginPath(); g.arc(m, m, r, a - len * (s + 1) / segs, a - len * s / segs);
+        g.strokeStyle = R.col; g.globalAlpha = al * Math.pow(1 - s / segs, 1.6) * .95; g.lineWidth = Math.max(3, w * .012); g.stroke();
+      }
+      g.globalAlpha = 1;
+    }
+    R.notes.forEach(({ ph, f = 0 }) => {
+      const an = top + ph * tau, x = m + r * Math.cos(an), y = m + r * Math.sin(an);
+      if (f > .02) { g.beginPath(); g.arc(x, y, dot * (1 + 3.4 * (1 - f)), 0, tau); g.fillStyle = R.col; g.globalAlpha = .42 * f * al; g.fill(); }
+      g.globalAlpha = al;
+      if (dark) { g.shadowColor = R.col; g.shadowBlur = 5 + 20 * f; }
+      g.beginPath(); g.arc(x, y, dot * (1 + .3 * f), 0, tau); g.fillStyle = R.col; g.fill();
+      g.shadowBlur = 0;
+      if (!dark) { g.lineWidth = 1.5; g.strokeStyle = TK.bg; g.stroke(); }
+      g.globalAlpha = 1;
+    });
+    (R.ghosts || []).forEach(x => {
+      const an = top + x.ph * tau;
+      g.beginPath(); g.arc(m + r * Math.cos(an), m + r * Math.sin(an), dot * (1 + 2 * (1 - x.f)), 0, tau);
+      g.strokeStyle = R.col; g.lineWidth = 2; g.globalAlpha = x.f; g.stroke(); g.globalAlpha = 1;
+    });
+    if (M.running && !R.empty) { g.beginPath(); g.arc(m + r * Math.cos(a), m + r * Math.sin(a), dot * .62, 0, tau); g.fillStyle = TK.ink; g.fill(); }
+    if (M.labels) {
+      g.font = `${R.bold ? 500 : 400} ${Math.max(9.5, Math.round(w * .022))}px "Martian Mono", monospace`;
+      g.textAlign = "right"; g.textBaseline = "middle";
+      const tw = g.measureText(R.label).width;
+      g.fillStyle = TK.bg; g.globalAlpha = .85; g.fillRect(m - 12 - tw - 4, m - r - w * .016, tw + 8, w * .032); g.globalAlpha = R.bold ? .95 : .65;
+      g.fillStyle = TK.ink; g.fillText(R.label, m - 12, m - r); g.globalAlpha = 1;
+    }
+  });
+}
+const fitCanvas = cv => {
+  const w = cv.clientWidth || 300, dpr = Math.min(window.devicePixelRatio || 1, 2);
+  if (cv.width !== Math.round(w * dpr)) cv.width = cv.height = Math.round(w * dpr);
+  const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return [g, w];
+};
+
+// ---- The rings, live from the CHOMPI ----------------------------------------------------
+const live = { clock: null, flash: [], ghosts: [], gong: 0 };
+const ratioOf = c => RATIO_VALUE[RATIO_IDS[link.ch[c].ratio]];
+const beatSeconds = () => link.st.l0 / 1000 * RATIO_VALUE[RATIO_IDS[link.st.ens]];
+function livePos(c) {
+  const k = live.clock;
+  if (!k) return 0;
+  const p = c < 0 ? k.l0 : k.pos[c];
+  if (!link.st.running) return p;
+  // The beat is L0 × the ensemble's ratio; a loop is the beat × its own.
+  const len = c < 0 ? beatSeconds() : beatSeconds() * ratioOf(c);
+  return (p + (performance.now() - k.t) / 1000 / len) % 1;
+}
+function liveClock(p) {
+  const v = i => (p[2 * i] | p[2 * i + 1] << 7) / 16384;
+  live.clock = { t: performance.now(), l0: v(0), pos: Array.from({ length: 15 }, (_, c) => v(c + 1)) };
+  if (p.length > 32) link.usbResets = p[32]; // how often the CHOMPI restarted its USB since power-on
+  if (p.length > 33) link.usbLent = p[33]; // how often the charger had the USB lines since power-on
+  if (p.length > 34) link.misreads = p[34]; // how often the CHOMPI misread its keys (all at once) since power-on
+}
+function liveNote(c, note) {
+  const ch = link.ch[c];
+  if (!ch) return;
+  const pos = livePos(c), key = note - 12 * ch.oct;
+  let best = -1, dist = .06;
+  ch.notes.forEach(([ph, n], j) => {
+    if (n !== key) return;
+    let d = Math.abs(ph / 16384 - pos); d = Math.min(d, 1 - d);
+    if (d < dist) { dist = d; best = j; }
+  });
+  (live.flash[c] || (live.flash[c] = {}));
+  if (best >= 0) live.flash[c][best] = 1;
+  else live.ghosts.push({ c, ph: pos, f: 1 });
+}
+function liveModel(small) {
+  const players = link.ch.map((ch, c) => c).filter(c => link.ch[c] && (link.ch[c].notes.length || c === link.st.sel || live.ghosts.some(x => x.c === c)));
+  return { running: link.st.running, pos: livePos(-1), swell: live.gong, labels: !small || players.length < 7,
+    rings: players.map(c => { const ch = link.ch[c], fl = live.flash[c] || {};
+      return { col: PRESET_INK[ch.preset], pos: livePos(c), bold: c === link.st.sel, muted: !!(link.st.muted >> c & 1), empty: !ch.notes.length,
+        label: `${c + 1} ×${RATIO_IDS[ch.ratio]}`, notes: ch.notes.map(([ph], j) => ({ ph: ph / 16384, f: fl[j] || 0 })),
+        ghosts: live.ghosts.filter(x => x.c === c) }; }) };
+}
+const dock = document.getElementById("dock"), dockCv = dock.querySelector("canvas");
+const full = document.getElementById("liveFull"), fullCv = full.querySelector("canvas"), fullList = full.querySelector(".players");
+const openFull = () => { full.hidden = false; full.querySelector("[data-close]").focus(); };
+const closeFull = () => { full.hidden = true; };
+dock.onclick = openFull;
+full.querySelector("[data-close]").onclick = closeFull;
+full.addEventListener("click", e => { if (e.target === full) closeFull(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !full.hidden) closeFull(); });
+const NAMES = ["Wood", "Marimba", "Vibes", "Bronze", "Glass", "Bell", "Gong", "Felt", "Snare bar", "Muffled",
+  "Amadinda", "Gangsa", "Mbira", "Kora", "Hang", "Singing bowl", "Bowed glass", "Voices", "Siku", "Pulse piano", "Hands", "Tape"];
+let listKey = "";
+function fillList() {
+  const rows = link.ch.map((ch, c) => [ch, c]).filter(([ch, c]) => ch.notes.length || c === link.st.sel);
+  const key = JSON.stringify([rows.map(([ch, c]) => [c, ch.preset, ch.ratio, ch.notes.length, ch.oct]), link.st.sel, link.st.muted]);
+  if (key === listKey) return;
+  listKey = key;
+  fullList.innerHTML = rows.map(([ch, c]) => `<li class="${c === link.st.sel ? "sel" : ""}${link.st.muted >> c & 1 ? " muted" : ""}"><b>${c + 1}</b><i class="dotc" style="--c:${PRESET_INK[ch.preset]}"></i><span>${NAMES[ch.preset]}</span><span>×${RATIO_IDS[ch.ratio]}${ch.oct ? ` · ${ch.oct > 0 ? "+" : "−"}${Math.abs(ch.oct)} oct` : ""}${ch.notes.length ? "" : " · no figure"}</span></li>`).join("");
+}
+function liveFrame(dt) {
+  const d = Math.exp(-dt * 4);
+  live.flash.forEach(f => { if (f) for (const j in f) f[j] *= d; });
+  live.ghosts.forEach(x => x.f *= Math.exp(-dt * 1.2));
+  live.ghosts = live.ghosts.filter(x => x.f > .03);
+  live.gong *= Math.exp(-dt * 6);
+  const on = !!(link.st && link.ch.length === 15 && link.ch.every(Boolean));
+  document.body.dataset.live = on ? "on" : "";
+  if (!on) { full.hidden = true; return; }
+  if (!full.hidden) { const [g, w] = fitCanvas(fullCv); drawRings(g, w, liveModel(false)); fillList(); }
+  else if (current !== 0 && dock.getClientRects().length) { const [g, w] = fitCanvas(dockCv); drawRings(g, w, liveModel(true)); }
+}
+
+// ---- Introduction: three players, three lengths -----------------------------------------
+// Kora ×1, vibes ×3/2, marimba ×3/4 of L0 = 2 s: together again every 3 L0.
+const PLAYERS = [
+  { name: "kora", c: PRESET_INK[13], ratio: 1, label: "×1", phases: [0, .25, .5, .75], notes: [62, 67, 64, 67], tone: "kora" },
+  { name: "vibes", c: PRESET_INK[2], ratio: 1.5, label: "×3/2", phases: [0, .33, .5, .83], notes: [74, 72, 79, 76], tone: "vibes" },
+  { name: "marimba", c: PRESET_INK[1], ratio: .75, label: "×3/4", phases: [0, .5, .75], notes: [50, 55, 57], tone: "marimba" },
+];
+const L0 = 2, MEET = 3; // L0 in seconds; all three start together every MEET L0
+PLAYERS.forEach(p => { p.pulse = p.phases.map(() => 0); p.pos = 0; });
+document.getElementById("legend").innerHTML = PLAYERS.map(p => `<span><i style="--c:${p.c}"></i>${p.name} ${p.label}</span>`).join("");
+let ac = null, playing = false, t = 0, gong = 0, ripple = null, appear = reduce ? 1 : 0;
+const hear = document.getElementById("hear"), hearLabel = hear.querySelector("span"), hearIco = hear.querySelector(".pl");
+const setHear = on => {
+  playing = on;
+  hear.setAttribute("aria-pressed", on);
+  hearLabel.textContent = on ? "Stop" : "Hear three players";
+  hearIco.setAttribute("d", on ? "M2.5 2 H11.5 V12 H2.5 Z" : "M3 1.5 L12 7 L3 12.5 Z");
+};
+hear.onclick = () => {
+  setHear(!playing);
+  if (playing && !ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { ac = null; } }
+  if (ac && ac.state === "suspended") ac.resume();
+  if (ac && !notesBuf) loadNotes();
+  if (playing) { t = 0; PLAYERS.forEach(p => p.pos = 0); ripple = 0; stopTracks(); }
+};
+// The notes, played by CIRCLES' own instruments (rendered from the firmware into one
+// file, notes.cpp): each in a 2.5 s slot, its attack 50 ms in.
+const NOTE_SLOTS = ["kora 62", "kora 64", "kora 67", "vibes 72", "vibes 74", "vibes 76", "vibes 79", "marimba 50", "marimba 55", "marimba 57"];
+let notesBuf = null, notesLoading = false;
+function loadNotes() {
+  if (notesLoading) return;
+  notesLoading = true;
+  fetch("intro-notes.mp3").then(r => r.arrayBuffer()).then(b => ac.decodeAudioData(b)).then(buf => { notesBuf = buf; }).catch(() => {});
+}
+// Until the notes are in (or without them): a small struck bar, a few partials that die
+// away, higher ones faster.
+const PARTIALS = { marimba: [[1, 1, 1.2], [4, .35, .25], [10, .1, .08]], vibes: [[1, 1, 2.2], [4, .3, .5], [9.9, .06, .15]], kora: [[1, 1, 1.6], [2, .4, .6], [3, .2, .3]] };
+function strike(note, tone) {
+  if (!ac) return;
+  const k = NOTE_SLOTS.indexOf(tone + " " + note);
+  if (notesBuf && k >= 0) {
+    const src = ac.createBufferSource(), g = ac.createGain();
+    src.buffer = notesBuf; g.gain.value = .9;
+    src.connect(g); g.connect(ac.destination);
+    src.start(ac.currentTime, Math.max(0, k * 2.5 + .045), 2.4);
+    return;
+  }
+  const f0 = 440 * Math.pow(2, (note - 69) / 12), now = ac.currentTime;
+  const out = ac.createGain(); out.gain.value = .11; out.connect(ac.destination);
+  PARTIALS[tone].forEach(([m, a, d]) => {
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.frequency.value = f0 * m; o.type = "sine";
+    g.gain.setValueAtTime(0, now); g.gain.linearRampToValueAtTime(a, now + .004); g.gain.exponentialRampToValueAtTime(.0001, now + d);
+    o.connect(g); g.connect(out); o.start(now); o.stop(now + d + .05);
+  });
+}
+const cv = document.getElementById("rings");
+const meet = document.getElementById("meet");
+function drawIntro() {
+  const [g, w] = fitCanvas(cv);
+  drawRings(g, w, { running: playing, pos: (t / L0) % 1, swell: gong, labels: true, ripple, reveal: appear,
+    rings: PLAYERS.map(p => ({ col: p.c, pos: p.pos, label: p.label, notes: p.phases.map((ph, j) => ({ ph, f: p.pulse[j] })) })) });
+}
+
+// ---- The recordings: a play key with its progress running round it -------------------
+const tracks = [...document.querySelectorAll(".track")].map(tr => {
+  const a = new Audio(); a.preload = "none"; a.src = tr.dataset.src;
+  const btn = tr.querySelector("button"), rp = tr.querySelector(".rp"), time = tr.querySelector(".time");
+  const C = 2 * Math.PI * 31, title = tr.querySelector("b").textContent;
+  rp.style.strokeDasharray = C; rp.style.strokeDashoffset = C;
+  const fmt = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+  const upd = () => { const p = a.duration ? a.currentTime / a.duration : 0; rp.style.strokeDashoffset = C * (1 - p); time.textContent = `${fmt(a.currentTime)} / ${fmt(a.duration || 30)}`; };
+  const state = on => { tr.classList.toggle("playing", on); btn.setAttribute("aria-pressed", on); btn.setAttribute("aria-label", (on ? "Pause " : "Play ") + title); };
+  btn.onclick = () => { if (a.paused) { stopTracks(a); if (playing) setHear(false); a.play().catch(() => {}); } else a.pause(); };
+  a.ontimeupdate = upd; a.onplay = () => state(true); a.onpause = () => state(false);
+  a.onended = () => { state(false); a.currentTime = 0; upd(); };
+  return a;
+});
+function stopTracks(keep) { tracks.forEach(a => { if (a !== keep && !a.paused) a.pause(); }); }
+
+// ---- Diagrams --------------------------------------------------------------------------
+// Loops as rows of bars, a bar per round, from a shared start to where they meet again.
+function roundsDiagram(rows, total, unit, caption, aria) {
+  const w = 480 / total, h = 8 + 30 * rows.length;
+  const row = ([len, col, label], j) => Array.from({ length: Math.round(total / len) }, (_, k) =>
+    `<rect x="${70 + k * len * w}" y="${8 + 30 * j}" width="${len * w - 4}" height="22" rx="11" fill="${col}" opacity="${.62 + .3 * (k % 2)}"/>`).join("")
+    + `<text x="62" y="${23 + 30 * j}" text-anchor="end" class="d-t">${label}</text>`;
+  return `<figure class="diag"><svg viewBox="0 0 570 ${h + 30}" role="img" aria-label="${aria}">
+      ${rows.map(row).join("")}
+      <line x1="68" x2="68" y1="2" y2="${h}" class="d-l"/><line x1="550" x2="550" y1="2" y2="${h}" class="d-l"/>
+      ${[0, total].map(t => `<text x="${(t ? 550 : 68)}" y="${h + 20}" text-anchor="middle" class="d-t">${t ? `${t} ${unit}` : "0"}</text>`).join("")}
+    </svg><figcaption>${caption}</figcaption></figure>`;
+}
+document.getElementById("introDiag").outerHTML = roundsDiagram(PLAYERS.map(p => [p.ratio, p.c, `${p.name} ${p.label}`]), MEET, "× L0",
+  "The rings, unrolled: a bar per round. Kora comes round three times, vibes twice, marimba four times, and at 3 × L0 they all start together again.",
+  "Kora at 1, vibes at 3/2 and marimba at 3/4 of L0 start together and meet again after 3 L0");
+// A circular score: a lesson's or a piece's players as rings round L0, their notes where
+// they fall in the loop. Rows: { n, col, ratio, fig, sel }.
+function scoreSvg(rows, aria, size = 250) {
+  const m = size / 2, rIn = size * .25, rOut = size * .47, k = rows.length, gap = k > 1 ? Math.min(size * .09, (rOut - rIn) / (k - 1)) : 0, tau = Math.PI * 2;
+  let s = `<svg class="score" viewBox="0 0 ${size} ${size}" role="img" aria-label="${aria}"><circle class="sc-core" cx="${m}" cy="${m}" r="${size * .14}"/><text class="sc-core-t" x="${m}" y="${m + 4.5}" text-anchor="middle">L0</text>`;
+  rows.forEach((p, i) => {
+    const r = rIn + i * gap, pulses = 8 * RATIO_VALUE[p.ratio || "1"];
+    const notes = Array.isArray(p.fig) ? p.fig : (FIG[p.fig] || []);
+    s += `<circle class="sc-ring${notes.length ? "" : " empty"}${p.sel ? " sel" : ""}" cx="${m}" cy="${m}" r="${r.toFixed(1)}"/>`;
+    notes.forEach(([pulse]) => { const an = -Math.PI / 2 + pulse / pulses * tau;
+      s += `<circle class="sc-n" cx="${(m + r * Math.cos(an)).toFixed(1)}" cy="${(m + r * Math.sin(an)).toFixed(1)}" r="${(size * .019).toFixed(1)}" fill="${p.col}"/>`; });
+  });
+  return s + "</svg>";
+}
+
+// ---- Lessons, one card at a time ----------------------------------------------------------
+// A lesson: a card on what it is about (with the players it starts with as a circular
+// score), a card per step with the CHOMPI as the stage, and the end, where the loop closes.
+const EYE = `<svg viewBox="0 0 26 26" aria-hidden="true"><path d="M2 13 C6 6 20 6 24 13 C20 20 6 20 2 13 Z"/><circle cx="13" cy="13" r="3.6"/></svg>`;
+const EAR = `<svg viewBox="0 0 26 26" aria-hidden="true"><path d="M5 10 V16 H9 L14 20 V6 L9 10 Z"/><path d="M17.5 9.5 C19 11.5 19 14.5 17.5 16.5"/><path d="M20.5 7 C23.5 10.5 23.5 15.5 20.5 19"/></svg>`;
+function closedRing(n) {
+  const s = 132, m = s / 2, r = 52;
+  const dots = Array.from({ length: n }, (_, k) => { const a = -Math.PI / 2 + k / n * Math.PI * 2; return `<circle class="dot" cx="${(m + r * Math.cos(a)).toFixed(1)}" cy="${(m + r * Math.sin(a)).toFixed(1)}" r="6.5"/>`; }).join("");
+  return `<svg class="closed" viewBox="0 0 ${s} ${s}" aria-hidden="true"><circle class="ring" cx="${m}" cy="${m}" r="${r}"/>${dots}<path class="tick" d="M52 67 L62 77 L82 56"/></svg>`;
+}
+const lessonsEl = document.getElementById("lessons");
+LESSONS.forEach((L, i) => {
+  const n = i + 1, sec = document.createElement("section");
+  sec.className = "chapter lesson"; sec.id = L.id; sec.dataset.ch = n; sec.hidden = true;
+  const next = LESSONS[i + 1];
+  const goes = () => sec.querySelectorAll("[data-go]").forEach(b => b.onclick = () => show(Number(b.dataset.go)));
+  if (L.sheet) {
+    const ctlHtml = SHEET_CTL.map(([nm, rows]) => `<section class="sc"><h4>${glyph(nm)}</h4><dl>${rows.map(([how, what]) =>
+      `<dt class="${/CHOMPI/.test(how) ? "with" : ""}">${how}</dt><dd>${what}</dd>`).join("")}</dl></section>`).join("");
+    sec.innerHTML = `<div class="card">
+      <div class="text"><p class="kicker">Chapter ${n} · Cheat sheet</p><h2>Every control on one page</h2>
+        <p class="sheetnote">${glyph("The keys play the chosen player, C3 to C5. With {chompi} held, the white keys are the players 1 to 15 and the black keys the lengths, times L0. While the wheel turns, the five lowest black keys show the octave, −2 to +2.")}</p></div>
+      <div class="panel-box sheetpanel" data-slot></div>
+      <div class="sheetctl">${ctlHtml}</div>
+      <p class="sheetall">${SHEET_ALL}</p>
+      <div class="sheetboxes">${SHEET_BOXES.map(([h, body]) => `<section><h3>${h}</h3>${glyph(body).replace(/<i style="--c:/g, '<i class="dotc" style="--c:')}</section>`).join("")}</div>
+      <div class="way"><button class="quiet" type="button" data-go="${n - 1}"><i class="ar bk" aria-hidden="true"></i>&nbsp;Back</button></div></div>`;
+    lessonsEl.appendChild(sec); goes();
+    return;
+  }
+  if (!L.steps) {
+    const swatch = ([col, how]) => `<i class="sw ${how}" style="--l:${col === "white" ? "#fffaf0" : col}"></i>`;
+    const pieces = L.pieces ? `<section class="band"><h3 class="pieces-h">Pieces to start from</h3><div class="pieces">${L.pieces.map((p, k) =>
+      `<article class="piece">${scoreSvg(p.setup.players.map(([pn, inst, fig, ratio]) => ({ n: pn, col: PRESET_INK[PRESET[inst]], fig, ratio, sel: pn === p.setup.sel })), `${p.title}: its players as rings round L0`)}
+        <p class="from">${p.from}</p><h4>${p.title}</h4><p>${p.about}</p><div class="first"><b>Try first:</b> ${p.first}</div>
+        <p class="loadp"><button class="kc primary small" type="button" data-piece="${k}">Load onto my CHOMPI</button><span>Replaces what it is playing now.</span></p>
+        <p class="noload">Connect your CHOMPI to load it.</p></article>`).join("")}</div></section>` : "";
+    const lightsH = L.lightsHelp ? `<details class="fold lightsfold"><summary>Puzzled by a light?</summary><div class="more"><ul class="lights">${L.lightsHelp.map(([sw, where, what]) =>
+      `<li>${swatch(sw)}<strong>${where}</strong><span>${what}</span></li>`).join("")}</ul></div></details>` : "";
+    sec.innerHTML = `<div class="card">
+      <div class="text"><p class="kicker">Chapter ${n} · ${L.name}</p><h2>${L.title}</h2><p class="lead">${L.lead}</p></div>
+      <ol class="advice">${L.advice.map(([a, b]) => `<li><strong>${a}</strong><span>${b}</span></li>`).join("")}</ol>
+      ${pieces}${L.roots ? `<section class="band roots-after">${L.roots}</section>` : ""}<div class="folds">${lightsH}</div>
+      <div class="way"><button class="quiet" type="button" data-go="${n - 1}"><i class="ar bk" aria-hidden="true"></i>&nbsp;Back</button>${next ? `<button class="kc primary" type="button" data-go="${n + 1}">${next.name}&nbsp;<i class="ar" aria-hidden="true"></i></button>` : ""}</div></div>`;
+    sec.querySelectorAll("[data-piece]").forEach(b => b.onclick = () => loadSetup(L.pieces[Number(b.dataset.piece)].setup));
+    lessonsEl.appendChild(sec); goes();
+    return;
+  }
+  const S = SETUP[L.id] || { players: [] };
+  const rows = (L.starts || []).map(([ch, p]) => { const x = S.players.find(q => q[0] === ch) || []; return { n: ch, col: P[p][1], fig: x[2], ratio: x[3] || "1", sel: S.sel === ch }; });
+  const starts = L.starts ? `<aside class="starts">${scoreSvg(rows, "The players this lesson starts with, as rings round L0")}
+      <p class="kicker" style="margin:6px 0 0">Your CHOMPI starts with</p>
+      <ul class="plist">${L.starts.map(([ch, p, what]) => `<li class="${S.sel === ch ? "sel" : ""}"><b>${ch}</b><i class="dotc" style="--c:${P[p][1]}"></i><span>${P[p][0]}</span><span>${what}</span></li>`).join("")}</ul>
+      <p class="startnote">${L.startNote}</p></aside>` : "";
+  const diagram = L.diagram ? roundsDiagram([[2, P.wood[1], "player 1"], [1.5, P.marimba[1], "player 2"]], 6, "s",
+    "Every round a new bar. Together at the start, apart in between, together again after 6 seconds.",
+    "Player 1 comes round every 2 seconds, player 2 every one and a half; both start together again after 6 seconds") : "";
+  const learn = L.learn ? `<p class="learn-h">In this lesson you learn to</p><ul class="learn">${L.learn.map(x => `<li>${x}</li>`).join("")}</ul>` : "";
+  const setsUp = !!SETUP[L.id];
+  const last = L.steps.length;
+  sec.innerHTML = `
+    <div class="ltrail"><span class="where"></span><span class="ticks">${["intro", ...L.steps.map((s, j) => j), "end"].map((s, k) =>
+      `<button type="button" data-j="${k - 1}" class="${k === last + 1 ? "end" : ""}" aria-label="${k === 0 ? "About this lesson" : k === last + 1 ? "The end of the lesson" : `Step ${k}: ${L.steps[k - 1].title}`}"><i></i></button>`).join("")}</span><span class="leave">hold CHOMPI and press play to leave the lesson</span></div>
+    <div class="card c-intro">
+      <div class="lhead"><div class="text"><h2>${L.title}</h2><p class="lead">${L.lead}</p>${diagram}${learn}</div>${starts}</div>
+      <div class="way"><button class="quiet" type="button" data-go="${n - 1}"><i class="ar bk" aria-hidden="true"></i>&nbsp;${n === 1 ? "Introduction" : "Back"}</button>
+        <span class="go"><span class="setnote">${setsUp ? "Starting sets your CHOMPI up for this lesson. It replaces what it is playing now." : ""}</span><button class="kc primary big" type="button" data-start>Start the lesson&nbsp;<i class="ar" aria-hidden="true"></i></button></span></div>
+    </div>
+    <div class="card c-step" hidden>
+      <div class="top2"><div class="words"><h3 class="st"></h3><p class="why"></p><p class="do"></p><p class="swnote" role="status" hidden></p></div><div class="dockslot"></div></div>
+      <div class="panel-box" data-slot></div>
+      <div class="way"><button class="quiet" type="button" data-prev><i class="ar bk" aria-hidden="true"></i>&nbsp;Back</button>
+        <details class="what"><summary>What should happen?</summary><dl class="result"><div>${EYE}<dt>You see</dt><dd class="see"></dd></div><div>${EAR}<dt>You hear</dt><dd class="hear"></dd></div></dl></details>
+        <button class="kc primary big" type="button" data-next>Next&nbsp;<i class="ar" aria-hidden="true"></i></button></div>
+    </div>
+    <div class="card c-end" hidden>
+      ${closedRing(last)}
+      <div class="text"><p class="kicker">Lesson ${n} · done</p><h2>${L.name}: the loop is closed.</h2>
+      <p class="tip"><b>Good to know.</b> ${glyph(L.tip)}</p></div>
+      <div class="way"><button class="quiet" type="button" data-prev><i class="ar bk" aria-hidden="true"></i>&nbsp;Back to the last step</button>
+        ${next ? `<button class="kc primary big" type="button" data-go="${n + 1}">Next lesson: ${next.name.toLowerCase()}&nbsp;<i class="ar" aria-hidden="true"></i></button>` : ""}</div>
+    </div>`;
+  lessonsEl.appendChild(sec);
+  const q = c => sec.querySelector(c), qa = c => [...sec.querySelectorAll(c)];
+  const cards = { intro: q(".c-intro"), step: q(".c-step"), end: q(".c-end") };
+  const ticks = qa(".ticks button");
+  L.at = -1;
+  // j: -1 the lesson's first card, 0.. a step, steps.length the end.
+  L.select = j => {
+    L.at = j;
+    cards.intro.hidden = j !== -1; cards.step.hidden = j < 0 || j >= last; cards.end.hidden = j !== last;
+    ticks.forEach((b, k) => { const s = k - 1; b.className = (s === last ? "end " : "") + (s < j ? "past" : s === j ? "here" : "") + (L.done && L.done.has(s) ? " ok" : ""); b.setAttribute("aria-current", s === j ? "step" : "false"); });
+    q(".where").textContent = j < 0 ? `Lesson ${n} · ${L.name}` : j >= last ? `Lesson ${n} · done` : `Lesson ${n} · step ${j + 1} of ${last}`;
+    if (j >= 0 && j < last) {
+      const s = L.steps[j];
+      q(".st").textContent = s.title;
+      q(".why").innerHTML = glyph(s.why);
+      q(".do").innerHTML = glyph(s.do);
+      q(".see").innerHTML = glyph(s.see);
+      q(".hear").innerHTML = glyph(s.hear);
+      q(".what").open = false;
+      paint(s, j + 1, L);
+      L.mark(j);
+    }
+    if (j >= 0 && j < last) q(".dockslot").appendChild(dock);
+    else document.body.appendChild(dock);
+    linkStep();
+    fitStage();
+  };
+  L.showActive = () => {};
+  L.mark = j => {
+    const ok = !!(L.done && L.done.has(j));
+    if (ticks[j + 1]) ticks[j + 1].classList.toggle("ok", ok);
+    if (j !== L.at) return;
+    cards.step.classList.toggle("ok", ok);
+    q("[data-next]").innerHTML = (ok ? "Done · next" : "Next") + "&nbsp;<i class='ar' aria-hidden='true'></i>";
+    if (ok) q(".what").open = true;
+  };
+  q("[data-start]").onclick = () => { if (setsUp && link.out) setUp(L); L.select(0); };
+  qa("[data-prev]").forEach(b => b.onclick = () => L.select(L.at - 1));
+  q("[data-next]").onclick = () => L.select(L.at + 1);
+  ticks.forEach(b => b.onclick = () => L.select(Number(b.dataset.j)));
+  goes();
+});
+// The panel as large as fits: the step card ends at the bottom of the window.
+const RATIO_SVG = 1158 / 540;
+let wordsKey = "", wordsH = 0;
+function reserveWords(card) {
+  const w = card.querySelector(".words").clientWidth, key = w + "|" + document.fonts.size;
+  if (key !== wordsKey) {
+    wordsKey = key;
+    const m = document.createElement("div");
+    m.className = "c-step ok"; m.setAttribute("aria-hidden", "true");
+    m.style.cssText = `position:absolute;visibility:hidden;left:0;top:0;width:${w}px;display:block`;
+    m.innerHTML = `<div class="words"><h3 class="st"></h3><p class="why"></p><p class="do"></p></div>`;
+    document.body.appendChild(m);
+    const words = m.firstChild, [st, why, dd] = [".st", ".why", ".do"].map(c => m.querySelector(c));
+    wordsH = 0;
+    LESSONS.forEach(L => (L.steps || []).forEach(s => {
+      st.textContent = s.title; why.innerHTML = glyph(s.why); dd.innerHTML = glyph(s.do);
+      wordsH = Math.max(wordsH, words.offsetHeight);
+    }));
+    m.remove();
+  }
+  document.querySelectorAll(".c-step .words").forEach(x => x.style.minHeight = wordsH + "px");
+}
+function fitStage() {
+  const box = svg.parentNode, card = box && box.closest(".c-step");
+  if (!card || card.hidden || card.closest("[hidden]")) return;
+  reserveWords(card);
+  svg.style.width = "";
+  // The row below the panel counts closed, so opening "What should happen?" moves nothing.
+  const top = box.getBoundingClientRect().top + window.scrollY;
+  const room = window.innerHeight - top - 76 - 40;
+  const w = Math.max(560, Math.min(box.clientWidth, room * RATIO_SVG));
+  svg.style.width = w + "px";
+}
+window.addEventListener("resize", fitStage);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { wordsKey = ""; fitStage(); });
+
+// ---- Chapters: the LED row --------------------------------------------------------------
+const CHAPTERS = [{ id: "intro", name: "Introduction" }, ...LESSONS];
+const prog = document.getElementById("prog");
+prog.style.setProperty("--n", CHAPTERS.length);
+prog.innerHTML = `<span class="wire" aria-hidden="true"></span>`;
+const railBtns = CHAPTERS.map((c, i) => {
+  const b = document.createElement("button");
+  b.type = "button"; b.dataset.name = c.name; b.style.setProperty("--i", i);
+  b.setAttribute("aria-label", `Chapter ${i}: ${c.name}`);
+  b.innerHTML = `<i class="led" aria-hidden="true"></i><span class="num" aria-hidden="true">${i}</span>`;
+  b.onclick = () => show(i);
+  prog.appendChild(b);
+  return b;
+});
+const railName = document.createElement("span");
+railName.className = "rail-name"; railName.setAttribute("aria-hidden", "true");
+prog.appendChild(railName);
+const indexBtn = document.createElement("button");
+indexBtn.type = "button"; indexBtn.className = "idx"; indexBtn.textContent = "Index"; indexBtn.setAttribute("aria-haspopup", "dialog");
+prog.appendChild(indexBtn);
+setTimeout(() => prog.classList.remove("boot"), 1600);
+const chapters = [...document.querySelectorAll(".chapter")];
+let current = 0;
+function show(i) {
+  current = i;
+  if (i !== 0 && playing) setHear(false);
+  chapters.forEach(s => s.hidden = Number(s.dataset.ch) !== i);
+  railBtns.forEach((b, j) => { b.setAttribute("aria-current", String(j === i)); if (j === i) b.classList.add("seen"); });
+  railName.innerHTML = `<b>${i}</b>${CHAPTERS[i].name}`;
+  document.body.dataset.ch = i;
+  const L = LESSONS[i - 1];
+  svg.setAttribute("viewBox", L && L.sheet ? "-10 -50 1158 440" : "-10 -72 1158 540");
+  if (L && L.steps) { chapters[i].querySelector("[data-slot]").appendChild(svg); L.select(L.at); }
+  if (L && L.sheet) { chapters[i].querySelector("[data-slot]").appendChild(svg); svg.style.width = ""; paint(SHEET_STEP, 0, null); }
+  try { history.replaceState(null, "", "#" + CHAPTERS[i].id); } catch (e) {}
+  if (!(L && L.steps)) linkStep();
+  window.scrollTo({ top: 0 });
+}
+document.querySelectorAll("#intro [data-go]").forEach(b => b.onclick = () => show(Number(b.dataset.go)));
+document.getElementById("brand").onclick = e => { e.preventDefault(); show(0); };
+// Links to a chapter in the text ("#after", "#lights") open it here.
+document.addEventListener("click", e => {
+  const a = e.target.closest && e.target.closest('a[href^="#"]');
+  if (!a || a.id === "brand") return;
+  const h = a.getAttribute("href").slice(1);
+  const i = CHAPTERS.findIndex(c => c.id === (h === "lights" ? "after" : h));
+  if (i < 0) return;
+  e.preventDefault(); show(i);
+  if (h === "lights") { const d = chapters[i].querySelector(".lightsfold"); if (d) { d.open = true; d.scrollIntoView({ block: "center" }); } }
+});
+// Arrow keys move through the cards.
+document.addEventListener("keydown", e => {
+  if (e.target.closest && e.target.closest("input, textarea, select")) return;
+  const L = LESSONS[current - 1];
+  if (!L || !L.steps || !full.hidden || !indexEl.hidden) return;
+  if (e.key === "ArrowRight" && L.at < L.steps.length) L.select(L.at + 1);
+  if (e.key === "ArrowLeft" && L.at > -1) L.select(L.at - 1);
+});
+// The live rings only when there is something to watch: a player with a figure.
+setInterval(() => {
+  const on = link.ch.some(c => c && c.notes.length) ? "on" : "";
+  if (document.body.dataset.loops !== on) { document.body.dataset.loops = on; fitStage(); }
+}, 500);
+
+// ---- The index: every lesson and step on one sheet ----------------------------------------
+const indexEl = document.createElement("div");
+indexEl.className = "index"; indexEl.hidden = true;
+indexEl.setAttribute("role", "dialog"); indexEl.setAttribute("aria-label", "Index");
+document.body.appendChild(indexEl);
+function fillIndex() {
+  const lessons = LESSONS.map((L, i) => {
+    const n = i + 1;
+    const steps = L.steps
+      ? `<ol>${L.steps.map((s, j) => `<li><button type="button" data-l="${n}" data-s="${j}" class="${L.done && L.done.has(j) ? "ok" : ""}${current === n && L.at === j ? " here" : ""}">${s.title}</button></li>`).join("")}</ol>`
+      : `<ul>${L.pieces ? L.pieces.map((p, k) => `<li><button type="button" data-l="${n}" data-to=".piece:nth-child(${k + 1})">Piece: ${p.title}</button></li>`).join("") : ""}
+          ${L.lightsHelp ? `<li><button type="button" data-l="${n}" data-to=".lightsfold">Puzzled by a light?</button></li>` : ""}</ul>`;
+    return `<section><h3><button type="button" data-l="${n}" data-s="-1"><b>${n}</b>${L.name}</button></h3>${steps}</section>`;
+  }).join("");
+  indexEl.innerHTML = `<div class="sheet"><div class="head"><h2>Index</h2><button class="kc" type="button" data-close>Close</button></div>
+    <div class="cols"><section><h3><button type="button" data-l="0"><b>0</b>Introduction</button></h3></section>${lessons}</div></div>`;
+}
+const openIndex = () => { fillIndex(); indexEl.hidden = false; indexEl.querySelector("[data-close]").focus(); };
+const closeIndex = () => { indexEl.hidden = true; };
+indexBtn.onclick = openIndex;
+indexEl.addEventListener("click", e => {
+  if (e.target.closest("[data-close]")) { closeIndex(); return; }
+  const b = e.target.closest("button[data-l]");
+  if (!b) return;
+  closeIndex();
+  const n = Number(b.dataset.l), L = LESSONS[n - 1];
+  show(n);
+  if (L && L.steps && b.dataset.s !== undefined) L.select(Number(b.dataset.s));
+  if (b.dataset.to) {
+    const t = chapters[n].querySelector(b.dataset.to);
+    if (t) { if (t.tagName === "DETAILS") t.open = true; t.scrollIntoView({ block: "center" }); }
+  }
+});
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !indexEl.hidden) closeIndex(); });
+
+// ---- One clock for every drawing ------------------------------------------------------------
+let lastT = performance.now();
+function frame(now) {
+  // A frame's time can lie a little before the page's start: never step backwards.
+  const dt = Math.max(0, Math.min((now - lastT) / 1000, .1)); lastT = Math.max(lastT, now);
+  if (playing) {
+    const t0 = t; t += dt;
+    if (Math.floor(t / L0) > Math.floor(t0 / L0)) gong = 1;
+    if (Math.floor(t / (MEET * L0)) > Math.floor(t0 / (MEET * L0))) ripple = 0;
+    PLAYERS.forEach(p => {
+      const prev = p.pos; p.pos = (t / (L0 * p.ratio)) % 1;
+      p.phases.forEach((ph, j) => {
+        const crossed = prev <= p.pos ? (ph >= prev && ph < p.pos) : (ph >= prev || ph < p.pos);
+        if (crossed) { p.pulse[j] = 1; strike(p.notes[j], p.tone); }
+      });
+    });
+    const cycle = (t % (MEET * L0)) / L0;
+    meet.textContent = cycle < .15 ? "all three start together" : `together again in ${(MEET - cycle).toFixed(1)} × L0`;
+  }
+  const d = Math.exp(-dt * 4);
+  PLAYERS.forEach(p => p.pulse = p.pulse.map(v => v * d)); gong *= Math.exp(-dt * 6);
+  if (ripple != null) { ripple += dt / 1.6; if (ripple >= 1) ripple = null; }
+  if (current === 0 && appear < 1) { appear = Math.min(1, appear + dt / 1.5); if (appear === 1 && !reduce) ripple = 0; }
+  liveFrame(dt);
+  if (current === 0) drawIntro();
+  if (reduce && !playing) setTimeout(() => requestAnimationFrame(frame), 200); else requestAnimationFrame(frame);
+}
+const start = CHAPTERS.findIndex(c => c.id === (location.hash || "").slice(1));
+show(start >= 0 ? start : 0);
+requestAnimationFrame(frame);
+})();
+</script>
+
+</body></html>

@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>CIRCLES Dev Snapshot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;400;500&family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;1,400&family=Martian+Mono:wght@400;500&family=Caveat:wght@600&display=swap">
+<style>
+/* The dev snapshot: what is in it, the download, what differs from the release,
+   and the pages that go with it. Same editions as the CIRCLES docs. */
+:root {
+  --bg: #FAF4F0; --bg-2: #F3E5DE; --bg-3: #EAD4CA;
+  --ink: #241C22; --ink-2: #6F5F64; --line: #E3CEC4;
+  --accent: #B5601C; --accent-ink: #FFF8F2;
+  --f-display: "Unbounded", "Futura", "Avenir Next", system-ui, sans-serif;
+  --f-body: "Schibsted Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --f-data: "Martian Mono", "JetBrains Mono", ui-monospace, Menlo, monospace;
+  --f-pen: "Caveat", "Segoe Print", "Bradley Hand", cursive;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #110F0E; --bg-2: #1B1816; --bg-3: #26211D;
+  --ink: #F2EADB; --ink-2: #A99E8C; --line: #322B25;
+  --accent: #F09A4E; --accent-ink: #1B0F05;
+  color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --bg: #110F0E; --bg-2: #1B1816; --bg-3: #26211D;
+  --ink: #F2EADB; --ink-2: #A99E8C; --line: #322B25;
+  --accent: #F09A4E; --accent-ink: #1B0F05;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 860px; margin: 0 auto; padding-inline: 16px; padding-block: 40px 80px; }
+a { color: var(--accent); }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+h1, h2 { font-family: var(--f-display); font-weight: 400; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(30px, 5.4vw, 50px); font-weight: 300; line-height: 1.08; }
+h2 { font-size: clamp(19px, 2.4vw, 23px); }
+p { margin: 0; max-width: 64ch; }
+.eyebrow { font-family: var(--f-data); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-2); }
+.lead { font-size: 18px; }
+.mono { font-family: var(--f-data); font-size: .82em; }
+.pen { font-family: var(--f-pen); color: var(--accent); font-size: 22px; line-height: 1.15; }
+header.top { display: grid; gap: 16px; padding-bottom: 30px; }
+section { display: grid; gap: 14px; padding-block: 26px; border-top: 1px solid var(--line); }
+.get { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; }
+.btn { display: inline-block; background: var(--accent); color: var(--accent-ink); font-family: var(--f-data); font-size: 13px; letter-spacing: .04em; text-decoration: none; padding: 12px 18px; border-radius: 999px; }
+.btn:hover { filter: brightness(1.08); }
+.snap { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 18px; margin: 0; font-size: 15px; }
+.snap dt { font-family: var(--f-data); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); padding-top: 3px; }
+.snap dd { margin: 0; }
+.diff { margin: 0; padding: 0; list-style: none; display: grid; }
+.diff li { display: grid; grid-template-columns: minmax(150px, 15em) minmax(0, 1fr); gap: 4px 18px; padding-block: 10px; border-bottom: 1px solid var(--line); }
+.diff .g { font-family: var(--f-data); font-size: 13px; }
+.diff .tag { font-family: var(--f-data); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); margin-right: 6px; }
+@media (max-width: 560px) { .diff li { grid-template-columns: minmax(0, 1fr); } .snap { grid-template-columns: minmax(0, 1fr); } }
+.pages { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+.pages a { display: grid; gap: 4px; padding: 16px; background: var(--bg-2); border-radius: 14px; text-decoration: none; color: var(--ink); height: 100%; }
+.pages a:hover { background: var(--bg-3); }
+.pages b { font-family: var(--f-display); font-weight: 400; font-size: 17px; }
+.pages span { font-size: 14px; color: var(--ink-2); }
+</style><style>
+nav.dev { display: flex; flex-wrap: wrap; gap: 6px 18px; padding-bottom: 26px; font-family: "Martian Mono", ui-monospace, monospace; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; }
+nav.dev a { color: var(--ink-2); text-decoration: none; padding-bottom: 3px; border-bottom: 1px solid transparent; }
+nav.dev a:hover { color: var(--ink); border-bottom-color: var(--line); }
+nav.dev a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); }
+nav.dev b { color: var(--accent); font-weight: 500; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav class="dev" aria-label="CIRCLES dev snapshot pages">
+  <b>Dev snapshot</b>
+  <a href="index.html" aria-current="page">Snapshot</a>
+  <a href="tutorial.html">Tutorial</a>
+  <a href="math.html">The math</a>
+  <a href="mindmap.html">Mind map</a>
+</nav>
+<header class="top">
+  <div class="eyebrow">CIRCLES · dev snapshot · 5 November 2026</div>
+  <h1>Work in progress</h1>
+  <p class="lead">This is a working snapshot of CIRCLES: something that works, but isn't quite finished. It's not a release. Things here can change, or go away again. The release is the <a href="https://ugrossek.github.io/CHOMPI/circles/">guided start</a>.</p>
+</header>
+
+<section aria-labelledby="get">
+  <h2 id="get">The firmware</h2>
+  <dl class="snap">
+    <dt>Build</dt><dd>CIRCLES-75 (drift + click)</dd>
+    <dt>Commit</dt><dd class="mono"><a href="https://github.com/ugrossek/CHOMPI/commit/eb5702262552f27ce46a1112e33e9f8e08d00119">eb57022</a></dd>
+  </dl>
+  <div class="get">
+    <a class="btn" href="https://github.com/ugrossek/CHOMPI/releases/download/circles-dev/CHOMPI_CIRCLES_dev.bin" download>Download CHOMPI_CIRCLES_dev.bin</a>
+    <p>Send it with <a href="https://ugrossek.github.io/CHOMPI/">Feed the CHOMPI</a>, or put it on a free key with the <a href="https://ugrossek.github.io/CHOMPI/setup/">setup tool</a>.</p>
+  </div>
+</section>
+
+<section aria-labelledby="diff">
+  <h2 id="diff">What's different from 1.0</h2>
+  <p>The tutorial here is the one with sliding a figure. In this build a few gestures do something else. Every player now runs at its own speed, pulled back to its place against L0.</p>
+  <ul class="diff">
+    <li><span class="g">play held + wheel</span><span><span class="tag">new</span>detune the chosen player (0.1 % a click, up to 5 %). On all it does nothing.</span></li>
+    <li><span class="g">play held + push</span><span><span class="tag">new</span>exact again. On all: everyone.</span></li>
+    <li><span class="g">loop held + wheel</span><span><span class="tag">changed</span>a kick: the figure jumps later or earlier (a 64th of its length a click), and the pull brings it back. On all: how strong the pull is.</span></li>
+    <li><span class="g">loop held + push</span><span><span class="tag">changed</span>glide home, back to its place. On all: everyone.</span></li>
+    <li><span class="g">loop held + play</span><span><span class="tag">changed</span>clear the chosen player (on all: everyone). Holding loop on its own no longer clears.</span></li>
+    <li><span class="g">a new length</span><span><span class="tag">changed</span>lands at the player's own loop start, not on L0.</span></li>
+    <li><span class="g">before the first figure</span><span><span class="tag">new</span>a short click on every L0, to play the first figure to.</span></li>
+  </ul>
+</section>
+
+<section aria-labelledby="pages">
+  <h2 id="pages">The pages that go with it</h2>
+  <ul class="pages">
+    <li><a href="tutorial.html"><b>Tutorial</b><span>The guided start, with sliding a figure. Note the gestures above.</span></a></li>
+    <li><a href="math.html"><b>The math</b><span>One formula for all of it, with live scopes.</span></a></li>
+    <li><a href="mindmap.html"><b>Mind map</b><span>What's there, what's needed, what's possible.</span></a></li>
+  </ul>
+</section>
+
+<section>
+  <p class="pen">Found something odd? That's what a snapshot is for.</p>
+</section>
+</div>
+
+</body>
+</html>

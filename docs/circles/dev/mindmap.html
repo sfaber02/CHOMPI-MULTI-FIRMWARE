@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>CIRCLES Mind Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;400;500&family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;1,400&family=Martian+Mono:wght@400;500&family=Caveat:wght@600&display=swap">
+<style>
+/* Layout: a mind map. CIRCLES in the middle as a set of rings, four branches on each
+   side joined to it by curves, every item a pill whose outline says its status.
+   Click an item: a sheet at the bottom tells what it is and what it hangs on.
+   Narrow screens: the same tree as one column. Same editions as the CIRCLES docs. */
+:root {
+  --bg: #FAF4F0; --bg-2: #F3E5DE; --bg-3: #EAD4CA;
+  --ink: #241C22; --ink-2: #6F5F64; --line: #E3CEC4;
+  --trace: #C0913F; --accent: #B5601C; --accent-ink: #FFF8F2;
+  --beta: #2F78B8; --beta-ink: #F4F9FF;
+  --f-display: "Unbounded", "Futura", "Avenir Next", system-ui, sans-serif;
+  --f-body: "Schibsted Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --f-data: "Martian Mono", "JetBrains Mono", ui-monospace, Menlo, monospace;
+  --f-pen: "Caveat", "Segoe Print", "Bradley Hand", cursive;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #110F0E; --bg-2: #1B1816; --bg-3: #26211D;
+  --ink: #F2EADB; --ink-2: #A99E8C; --line: #322B25;
+  --trace: #C9A15A; --accent: #F09A4E; --accent-ink: #1B0F05;
+  --beta: #6BAEEA; --beta-ink: #08131D;
+  color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --bg: #110F0E; --bg-2: #1B1816; --bg-3: #26211D;
+  --ink: #F2EADB; --ink-2: #A99E8C; --line: #322B25;
+  --trace: #C9A15A; --accent: #F09A4E; --accent-ink: #1B0F05;
+  --beta: #6BAEEA; --beta-ink: #08131D;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 16px; line-height: 1.5; }
+.wrap { max-width: 1320px; margin: 0 auto; padding-inline: 20px; padding-block: 36px 220px; }
+h1, h2, h3 { font-family: var(--f-display); font-weight: 400; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(28px, 4.4vw, 46px); font-weight: 300; line-height: 1.1; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font-family: var(--f-data); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-2); }
+header.top { display: grid; gap: 14px; padding-bottom: 22px; }
+.lead { font-size: 17px; color: var(--ink-2); }
+
+/* legend + filter */
+.filters { display: flex; flex-wrap: wrap; gap: 8px; padding-block: 6px 26px; }
+.filters button { font: 500 13px/1 var(--f-body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 999px; padding: 7px 11px 7px 9px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-variant-numeric: tabular-nums; }
+.filters button:hover { background: var(--bg-2); }
+.filters button[aria-pressed="true"] { border-color: var(--ink); background: var(--bg-2); }
+.filters .sw { width: 22px; height: 12px; border-radius: 999px; display: inline-block; }
+.filters .ct { font-family: var(--f-data); font-size: 11px; color: var(--ink-2); }
+button:focus-visible, .node:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* the map */
+.map { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 230px minmax(0, 1fr); gap: 0 56px; align-items: start; }
+.map svg.links { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.map svg.links path { fill: none; stroke: var(--trace); stroke-width: 1.6; }
+.side { display: grid; gap: 34px; min-width: 0; position: relative; }
+.side.left .branch { justify-items: end; text-align: right; }
+.side.left .kids { justify-content: flex-end; }
+.hub { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 20px); display: grid; justify-items: center; gap: 6px; padding-top: 30px; }
+.hub svg { width: 190px; height: 190px; }
+.hub .ring { fill: none; stroke: var(--trace); stroke-width: 1.3; }
+.hub .hand { stroke: var(--ink); stroke-width: 1.5; }
+.hub .dot { fill: var(--accent); }
+.hub .name { font-family: var(--f-display); font-size: 17px; fill: var(--ink); text-anchor: middle; letter-spacing: .04em; }
+.hub .sub { font-family: var(--f-data); font-size: 8px; fill: var(--ink-2); text-anchor: middle; letter-spacing: .1em; }
+.hub p { font-size: 13px; color: var(--ink-2); text-align: center; max-width: 24ch; }
+@media (prefers-reduced-motion: no-preference) { .hub .spin { transform-origin: 95px 95px; animation: spin 24s linear infinite; } .hub .spin2 { transform-origin: 95px 95px; animation: spin 30s linear infinite; } }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.branch { display: grid; gap: 10px; min-width: 0; }
+.bhead { display: inline-flex; flex-direction: column; gap: 2px; padding: 9px 14px; border-radius: 12px; background: var(--bg-2); border: 1px solid var(--line); }
+.bhead h2 { font-size: 17px; }
+.bhead span { font-size: 13px; color: var(--ink-2); }
+.kids { display: flex; flex-wrap: wrap; gap: 7px; max-width: 520px; }
+
+.node { font: 500 13.5px/1.25 var(--f-body); color: var(--ink); background: var(--bg); border: 1.5px solid var(--ink-2); border-radius: 999px; padding: 6px 11px; cursor: pointer; display: inline-flex; align-items: baseline; gap: 7px; text-align: left; transition: opacity .2s; }
+.node .sz { font: 500 10px/1 var(--f-data); color: var(--ink-2); letter-spacing: .04em; }
+.node:hover { background: var(--bg-2); }
+.node.s-v1 { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.node.s-v1:hover { background: var(--ink-2); border-color: var(--ink-2); }
+.node.s-b2 { background: var(--beta); color: var(--beta-ink); border-color: var(--beta); }
+.node.s-b2:hover { filter: brightness(1.08); }
+.node.s-test { background: var(--bg-3); border-color: var(--beta); border-style: dotted; border-width: 2px; }
+.node.s-need { border: 2px solid var(--accent); font-weight: 600; }
+.node.s-need::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); align-self: center; }
+.node.s-q { border: 1.5px dashed var(--accent); }
+.node.s-q::before { content: "?"; font-family: var(--f-pen); color: var(--accent); font-size: 19px; line-height: 0; align-self: center; }
+.node.s-pos { border-style: dashed; }
+.node.s-park { border: 1.5px dotted var(--ink-2); color: var(--ink-2); }
+.node.s-drop { border: 1px solid var(--line); color: var(--ink-2); text-decoration: line-through; }
+.node.s-limit { border: 3px double var(--ink-2); }
+.node[aria-pressed="true"] { box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--accent); }
+.node.linked { box-shadow: 0 0 0 3px var(--bg), 0 0 0 4.5px var(--trace); }
+.map.filtering .node.dim { opacity: .22; }
+
+/* the sheet */
+.sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; display: flex; justify-content: center; padding-inline: 16px; padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 14px); pointer-events: none; }
+.sheet .card { pointer-events: auto; width: min(760px, 100%); background: var(--bg-2); border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px 18px; display: grid; gap: 8px; box-shadow: 0 10px 40px rgb(0 0 0 / .14); }
+.sheet .row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; }
+.sheet h3 { font-size: 18px; flex: 1 1 240px; }
+.sheet .tag { font-family: var(--f-data); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); }
+.sheet .what { font-size: 15px; }
+.sheet .dep { font-size: 14px; color: var(--ink-2); }
+.sheet .dep b { color: var(--ink); font-weight: 600; }
+.sheet .close { font: 500 13px/1 var(--f-body); color: var(--ink); background: var(--bg); border: 1px solid var(--ink-2); border-radius: 8px; padding: 7px 10px; cursor: pointer; }
+.hint { font-family: var(--f-pen); color: var(--accent); font-size: 21px; }
+
+@media (max-width: 960px) {
+  .map { grid-template-columns: minmax(0, 1fr); gap: 30px; }
+  .map svg.links { display: none; }
+  .hub { position: static; order: -1; padding-top: 0; }
+  .hub svg { width: 140px; height: 140px; }
+  .side { border-left: 1.5px solid var(--trace); padding-left: 16px; gap: 28px; }
+  .side.left .branch { justify-items: start; text-align: left; }
+  .side.left .kids { justify-content: flex-start; }
+}
+</style><style>
+nav.dev { display: flex; flex-wrap: wrap; gap: 6px 18px; padding-bottom: 26px; font-family: "Martian Mono", ui-monospace, monospace; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; }
+nav.dev a { color: var(--ink-2); text-decoration: none; padding-bottom: 3px; border-bottom: 1px solid transparent; }
+nav.dev a:hover { color: var(--ink); border-bottom-color: var(--line); }
+nav.dev a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); }
+nav.dev b { color: var(--accent); font-weight: 500; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav class="dev" aria-label="CIRCLES dev snapshot pages">
+  <b>Dev snapshot</b>
+  <a href="index.html">Snapshot</a>
+  <a href="tutorial.html">Tutorial</a>
+  <a href="math.html">The math</a>
+  <a href="mindmap.html" aria-current="page">Mind map</a>
+</nav>
+<header class="top">
+  <div class="eyebrow">CIRCLES · what's there, what's needed, what's possible · 4 November 2026</div>
+  <h1>Everything around CIRCLES, on one map</h1>
+  <p class="lead">Filled items are in CIRCLES now: dark ones in 1.0, blue ones in the dev build. Outlined items aren't there yet; the outline says how far they are. S, M and L are rough sizes. Click an item to see what it is and what it hangs on.</p>
+</header>
+
+<div class="filters" id="filters" role="group" aria-label="Show only"></div>
+
+<div class="map" id="map">
+  <svg class="links" id="links" aria-hidden="true"></svg>
+  <div class="side left" id="left"></div>
+  <div class="hub" id="hub">
+    <svg viewBox="0 0 190 190" role="img" aria-label="CIRCLES: three rings with a hand">
+      <circle class="ring" cx="95" cy="95" r="56"/>
+      <circle class="ring" cx="95" cy="95" r="70"/>
+      <circle class="ring" cx="95" cy="95" r="84"/>
+      <g class="spin"><line class="hand" x1="95" y1="95" x2="95" y2="9"/><circle class="dot" cx="95" cy="25" r="4"/></g>
+      <g class="spin2"><circle class="dot" cx="151" cy="95" r="3.5" opacity=".7"/></g>
+      <text class="name" x="95" y="100">CIRCLES</text>
+      <text class="sub" x="95" y="116">1.0 · DEV</text>
+    </svg>
+    <p>1.0 is out. The dev build, the drift build, is CIRCLES-75.</p>
+  </div>
+  <div class="side right" id="right"></div>
+</div>
+</div>
+
+<div class="sheet" id="sheet" hidden>
+  <div class="card" role="region" aria-live="polite" aria-label="About this item">
+    <div class="row"><h3 id="s-title"></h3><span class="tag" id="s-tag"></span><button class="close" id="s-close" type="button">Close</button></div>
+    <p class="what" id="s-what"></p>
+    <p class="dep" id="s-dep"></p>
+  </div>
+</div>
+
+<script>
+const STATUS = {
+  v1:    { l: 'In 1.0', sw: 'background:var(--ink)' },
+  b2:    { l: 'In the dev build', sw: 'background:var(--beta)' },
+  test:  { l: 'Built, test build only', sw: 'background:var(--bg-3);border:2px dotted var(--beta)' },
+  need:  { l: 'Needed', sw: 'border:2px solid var(--accent)' },
+  q:     { l: 'Open question', sw: 'border:1.5px dashed var(--accent)' },
+  pos:   { l: 'Possible', sw: 'border:1.5px dashed var(--ink-2)' },
+  park:  { l: 'Parked', sw: 'border:1.5px dotted var(--ink-2)' },
+  drop:  { l: 'Dropped', sw: 'border:1px solid var(--line);background:linear-gradient(transparent 45%,var(--ink-2) 45%,var(--ink-2) 58%,transparent 58%)' },
+  limit: { l: 'Limit', sw: 'border:3px double var(--ink-2)' },
+};
+const BRANCHES = [
+  { id: 'play',  side: 'left',  t: 'Playing',          s: 'Keys, gestures, figures' },
+  { id: 'time',  side: 'left',  t: 'Time and phase',   s: 'From the formula' },
+  { id: 'light', side: 'left',  t: 'Lights',           s: 'What the keys show' },
+  { id: 'shop',  side: 'left',  t: 'Workshop',         s: 'Behind the scenes' },
+  { id: 'next',  side: 'right', t: 'Next release',     s: 'What 2.0 needs' },
+  { id: 'sound', side: 'right', t: 'Sound',            s: 'Instruments and effects' },
+  { id: 'pages', side: 'right', t: 'Pages and tools',  s: 'On the computer' },
+  { id: 'far',   side: 'right', t: 'Further out',      s: 'Ideas to weigh' },
+];
+// id, branch, label, status, size, what, deps
+const N = [
+  // playing
+  ['players', 'play', '15 players on the white keys', 'v1', '', 'CHOMPI + a white key chooses a player; the keys play it.'],
+  ['keep', 'play', 'Loop keeps what you just played', 'v1', '', 'Loop keeps the last length of what you played, one length back from the press. CHOMPI + loop adds to it. No record button.'],
+  ['pass', 'play', 'Pass a figure on', 'v1', '', 'CHOMPI + hold one player\'s key + press another\'s: the figure goes over, in step, on the new instrument. The In C walk.'],
+  ['lengths', 'play', 'Ten lengths, as windows', 'v1', '', 'CHOMPI + a black key: 1/3 to 3 of L0. A longer length adds rest, a shorter one wraps notes round; nothing is stretched.'],
+  ['tempo', 'play', 'L0 and the tempo', 'v1', '', 'CHOMPI + wheel sets L0. On all, CHOMPI + a black key is the ensemble length, a tempo for everyone.'],
+  ['octave', 'play', 'Wheel = octave', 'v1', '', 'The wheel alone moves the chosen player\'s octave; its figure follows.'],
+  ['mute', 'play', 'Mute and listen', 'v1', '', 'Play + tap a white key mutes; play + hold a white key listens to that player.'],
+  ['feel', 'play', 'The feel', 'v1', '', 'K2 with CHOMPI held: repeats up to 30 ms early or late, softer or louder, and above half some notes left out.'],
+  ['switch', 'play', 'One / all switch', 'v1', '', 'The same gestures act on the chosen player or on everyone.'],
+  ['reset', 'play', 'CHOMPI + push resets a knob', 'v1', '', 'Puts both layers of a knob back to the instrument\'s values.'],
+  ['clear', 'play', 'Loop held + play clears', 'b2', '', 'Replaces the 2 s loop hold of 1.0, which cleared by accident once loop became a key you hold for other things.'],
+  ['click', 'play', 'Click before the first figure', 'b2', '', 'A short high click on every L0 while running, until a player has a figure. Comes back when every figure is cleared.'],
+  ['undo', 'play', 'Undo (versions)', 'test', 'M', 'Eight versions per player and four of the ensemble, stepped through with CHOMPI + loop + wheel. Only in the test build. You are not convinced; the figure library could take its place.', ['freeze']],
+  ['figdb', 'play', 'A library of figures', 'pos', 'L', 'Every figure that is kept goes into one shared library, and any player can take any figure from it, in its own sound and octave. Replacing a figure loses nothing, so it works a bit like undo. Your idea, 4 November.', ['keep', 'pass']],
+  ['figpick', 'play', 'How to take a figure?', 'q', 'S', 'Proposed: move on, as In C players do. CHOMPI + loop held + wheel steps the chosen player (on all: everyone) to the next or previous figure, at its own loop start; the keys light the figure\'s notes. Kept in mind for all: loop held + a white key moves that player on (today it only plays a note there).', ['figdb']],
+  ['figsets', 'play', 'Figures that come with it', 'pos', 'M', 'A set of figures loaded into the library before playing, like In C\'s 53. Loaded from the page over USB. Publishing In C\'s own figures needs permission.', ['figdb', 'protocol']],
+  ['after', 'play', 'Length after playing', 'test', 'S', 'Loop held + black key keeps again with that length. Only in the test build.', ['freeze']],
+  // time
+  ['detune', 'time', 'Detune', 'b2', '', 'Play held + wheel: 0.1 % a click, up to 5 % either way. Play held + push: exact again.'],
+  ['pull', 'time', 'Pull towards the ghost', 'b2', '', 'One amount for everyone, 4 % at power-on, up to 20 %. A small detune locks, a larger one slips round.'],
+  ['kick', 'time', 'Kick', 'b2', '', 'Loop held + wheel: a 64th of the player\'s length per click, right for later. The pull brings it back.'],
+  ['glide', 'time', 'Glide home', 'b2', '', 'Loop held + push: a strong pull, detune ignored, until the player is back with its ghost. On all: everyone home.'],
+  ['ownstart', 'time', 'New length at its own loop start', 'b2', '', 'In the dev build a new length waits for the player\'s own loop start, so nothing jumps.'],
+  ['coupling', 'time', 'Players pull each other', 'pos', 'M', 'Coupling (Kuramoto): players of the same length find each other wherever they are, not only at home. Your verdict on the Atlas: "great".', ['pull']],
+  ['wander', 'time', 'Wander', 'pos', 'S', 'Noise on a player\'s speed: the feel, but for phase, so it adds up and the pull brings it back.', ['pull']],
+  ['lfo', 'time', 'Slow cycles on any knob', 'pos', 'M', 'A slow cycle, n · L0 long, on level, brightness, decay, pan or feel. Eno\'s long arcs without anyone playing them.'],
+  ['mirror', 'time', 'Retrograde and inversion', 'pos', 'M', 'A copy that runs backwards or upside down, made from a kept figure without playing it.', ['pass']],
+  ['pulses', 'time', 'Lengths in pulses', 'park', 'M', 'L0 = 8 pulses, lengths 1 to 24 pulses: In C\'s odd lengths and Clapping Music steps. Parked until it is missed while playing.'],
+  ['slide', 'time', 'Slide (moves the notes)', 'drop', '', 'An earlier plan. The drift build moves the hand instead: the kick.'],
+  ['group', 'time', 'Detune several players together', 'drop', '', 'You dropped it yourself: "we are at the edge of too many features already".'],
+  ['sync', 'time', 'Hard sync', 'drop', '', 'With lengths as windows it would only play the first L0.'],
+  // lights
+  ['colours', 'light', 'A colour per instrument', 'v1', '', 'Each player shows in its instrument\'s colour.'],
+  ['bar', 'light', 'Value bar while a knob turns', 'v1', '', 'The keys show the knob\'s value as a bar, with a mark at the instrument\'s value.'],
+  ['glow', 'light', 'Keys glow with the sound', 'v1', '', 'With CHOMPI held, each player\'s key glows with its voices.'],
+  ['swell', 'light', 'A waiting length swells', 'v1', '', 'The black key of a length waiting for its beat swells slowly.'],
+  ['k6', 'light', 'Busy and USB view on K6', 'v1', '', 'Holding K6 shows how busy the CHOMPI is and the USB state.'],
+  ['ghostkeys', 'light', 'Place against its ghost', 'b2', '', 'While you kick or detune, the keys show how far the player is from its ghost.'],
+  // workshop
+  ['render', 'shop', 'Offline renders', 'v1', '', 'Pieces rendered from the firmware code on the computer, for listening and A/B.'],
+  ['hostsim', 'shop', 'Host simulation', 'v1', '', 'Meter.h running on the computer with a fake panel: new behaviour is tried there before the hardware.'],
+  ['bench', 'shop', 'BENCH', 'v1', '', 'A firmware that times each instrument on the CHOMPI. It decided which instruments fit.'],
+  ['playground', 'shop', 'Sound playground', 'v1', '', 'The mallet engine and room in the browser, with sliders.'],
+  ['usbtools', 'shop', 'USB debug tools', 'v1', '', 'hello.py, mon.py and stress.py, and the write-up of the USB-MIDI fixes.'],
+  ['hiwatts', 'shop', 'Tell @hiwatts about the key scan', 'need', 'S', 'The libDaisy CD4021 scan was too fast and gave ghost keys; CIRCLES has its own driver. Other CHOMPI firmwares use the same driver.'],
+  // next release
+  ['freeze', 'next', 'Decide what 2.0 contains', 'q', 'S', 'Is 2.0 the drift build (detune, pull, kick, glide home, click, loop + play clears) and nothing more? The tutorial and notes follow from this.'],
+  ['hwtest', 'next', 'Test CIRCLES-75 on the CHOMPI', 'need', 'S', 'The click before the first figure has only run in the build, not on the hardware.'],
+  ['clickback', 'next', 'Click after clear-all?', 'q', 'S', 'Today the click comes back when every figure is cleared. Keep that?', ['hwtest']],
+  ['chapters', 'next', 'Tutorial in chapters', 'need', 'L', 'Chapters, each meaningful on its own, starting from its own setup: 0 First sound, 1 A loop of your own, 2 Walk a phrase, 3 Sound and space, 4 Conducting, 5 Four against five, 6 Phase. Needed because today\'s tutorial teaches the 2 s hold to clear.', ['freeze', 'clear']],
+  ['landing', 'next', 'A CIRCLES landing page', 'need', 'M', 'One page at /circles/ that leads to the tutorial, the tools, the design and math pages and the download, without going through the tutorial.'],
+  ['publish', 'next', 'Publish design and math pages', 'need', 'S', 'Both are drafts as artifacts. build_pages.py writes them into CHOMPI-pages docs/circles/.', ['landing']],
+  ['notes', 'next', 'Release notes for 2.0', 'need', 'S', 'And the old intro text in the GitHub notes still needs fixing.', ['freeze']],
+  // sound
+  ['instr', 'sound', '14 instruments', 'v1', '', 'The mallet engine with its materials, and the study instruments: wood, marimba, amadinda, gangsa, mbira, kora, snare bar, muffled, vibes, bell, hang, singing bowl, gong, glass.'],
+  ['knobs', 'sound', 'Strike, brightness, decay, level and their layers', 'v1', '', 'K1 strike | shimmer, K2 brightness | feel, K3 decay | prep, K4 level | pan, K6 volume | room.'],
+  ['room', 'sound', 'Room reverb, pan, width', 'v1', '', 'One shared room. Pan per player, width on all.'],
+  ['cpu', 'sound', 'CPU budget', 'limit', '', 'Every new sound and effect shares it. The load guard sheds the quietest voices when it runs out. BENCH measures it.'],
+  ['improve', 'sound', 'Improve the current set', 'pos', 'M', 'Open points from listening: marimba a bit dull, the bell "very constructed", the gong good on some notes, snare bar and muffled close to synths.'],
+  ['sets', 'sound', 'Choosing a sound set', 'pos', 'S', 'The instruments shown in the sound view, chosen by set. CIRCLES-45 once had two sets on the black keys; 1.0 shows one.', ['cpu']],
+  ['office', 'sound', 'An office set', 'q', 'L', 'Your idea. Open: physical office objects (desk bell, mug, ruler twang, typewriter, stapler) or office electronics (beeps, rings, printer, keys), or both?', ['sets', 'cpu']],
+  ['short', 'sound', 'A set of short synth sounds', 'pos', 'L', 'Short synthetic sounds as their own set, next to the acoustic one.', ['sets', 'cpu']],
+  ['pitch', 'sound', 'Pitch parameters', 'q', 'M', 'Open: a pitch drop on the strike, fine tuning per player, glide between notes, or a little random pitch per hit?', ['cpu']],
+  ['delay', 'sound', 'Delay timed in L0', 'pos', 'M', 'Delay time as a ratio of L0, so it follows the tempo and echoes make a second rhythm.', ['sendq', 'cpu']],
+  ['sendq', 'sound', 'Effects shared or per instrument?', 'q', 'S', 'One shared send with an amount per player is cheap. Per instrument costs up to 15× the CPU and needs more knobs.'],
+  ['longrev', 'sound', 'A really long reverb', 'pos', 'M', 'For long-loop pieces: the room knob\'s top end into a long hall. Try as a render first.', ['room']],
+  ['grit', 'sound', 'Grit (FM) and Breath engines', 'park', '', 'Grit didn\'t sit with the mallets, Breath was in the uncanny valley. Grit could return in a synth set.', ['short']],
+  // pages
+  ['tutorial', 'pages', 'Tutorial at /circles/', 'v1', '', 'Lessons that set up the CHOMPI over USB, with the playable orrery in the intro.'],
+  ['german', 'pages', 'German tutorial', 'v1', '', 'Local only, not published.'],
+  ['controls', 'pages', 'Controls overview', 'v1', '', 'Every gesture on one page.'],
+  ['mathp', 'pages', 'Math page', 'v1', '', 'The formula first, with live scopes. A draft artifact, not on GitHub yet.'],
+  ['designp', 'pages', 'Design principles', 'v1', '', 'Three principles. A draft artifact, not on GitHub yet.'],
+  ['setup', 'pages', 'Setup tool and Feed the CHOMPI', 'v1', '', 'CIRCLES is in the setup tool\'s list; Feed the CHOMPI sends a downloaded file to a slot.'],
+  ['protocol', 'pages', 'USB-MIDI link', 'v1', '', 'The page sets up players and reads them back; the CHOMPI sends every player\'s place about ten times a second and every note.'],
+  ['viewer', 'pages', 'Live circle viewer', 'pos', 'M', 'The circles and waves from the math page, fed live by the CHOMPI: watch the players turn while you play.', ['protocol', 'ghostbytes', 'landing']],
+  ['ghostbytes', 'pages', 'Ghost positions over USB', 'pos', 'S', 'A few more bytes in the clock message so the viewer can draw each player\'s ghost in the drift build.', ['protocol']],
+  ['playweb', 'pages', 'Play circles in the browser', 'pos', 'M', 'A playground from the math page model, without a CHOMPI.', ['mathp']],
+  ['save', 'pages', 'Save and restore pieces', 'pos', 'M', 'The page reads every player and can set them up again, so pieces can live in the browser without a firmware change.', ['protocol']],
+  ['headline', 'pages', 'Hear it next to the headline', 'pos', 'S', 'A play button by the tutorial\'s headline: people decide by ear.', ['tutorial']],
+  // further out
+  ['clockout', 'far', 'MIDI clock out', 'pos', 'M', 'Other gear follows L0. Open: L0 has no metre, so how many clocks per L0?'],
+  ['cue', 'far', 'Headphones as a cue', 'pos', 'L', 'Prepare the next figure on the headphones while the line out plays on, DJ style.'],
+  ['persist', 'far', 'Keep a piece after power-off', 'pos', 'M', 'On the CHOMPI itself, without a computer. With a figure library, the library is what would be kept.', ['save', 'figdb']],
+  ['inc', 'far', 'In C as its own firmware', 'park', 'L', 'The 53 figures in order, a one-time-use instrument. Publishing needs permission. A figure library with In C loaded would get most of the way inside CIRCLES.', ['figsets']],
+];
+const nodes = N.map(([id, b, label, st, size, what, deps]) => ({ id, b, label, st, size, what, deps: deps || [] }));
+const byId = Object.fromEntries(nodes.map(n => [n.id, n]));
+const dependents = id => nodes.filter(n => n.deps.includes(id));
+
+const els = {};
+const heads = {};
+for (const br of BRANCHES) {
+  const sec = document.createElement('section'); sec.className = 'branch'; sec.setAttribute('aria-label', br.t);
+  const h = document.createElement('div'); h.className = 'bhead'; h.innerHTML = `<h2>${br.t}</h2><span>${br.s}</span>`;
+  const kids = document.createElement('div'); kids.className = 'kids';
+  nodes.filter(n => n.b === br.id).forEach(n => {
+    const b = document.createElement('button'); b.type = 'button'; b.id = 'n-' + n.id; b.className = 'node s-' + n.st;
+    b.setAttribute('aria-pressed', 'false');
+    b.innerHTML = `<span>${n.label}</span>` + (n.size ? `<span class="sz">${n.size}</span>` : '');
+    b.title = STATUS[n.st].l;
+    b.onclick = () => select(n.id);
+    kids.append(b); els[n.id] = b;
+  });
+  sec.append(h, kids);
+  document.getElementById(br.side).append(sec);
+  heads[br.id] = h;
+}
+
+// filters
+const fbox = document.getElementById('filters');
+let filter = null;
+const order = ['v1', 'b2', 'test', 'need', 'q', 'pos', 'park', 'drop'];
+order.forEach(k => {
+  const b = document.createElement('button'); b.type = 'button'; b.id = 'f-' + k; b.setAttribute('aria-pressed', 'false');
+  const n = nodes.filter(x => x.st === k).length;
+  b.innerHTML = `<span class="sw" style="${STATUS[k].sw}"></span>${STATUS[k].l}<span class="ct">${n}</span>`;
+  b.onclick = () => { filter = filter === k ? null : k; applyFilter(); };
+  fbox.append(b);
+});
+function applyFilter() {
+  fbox.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.id === 'f-' + filter)));
+  document.getElementById('map').classList.toggle('filtering', !!filter);
+  nodes.forEach(n => els[n.id].classList.toggle('dim', !!filter && n.st !== filter && !(filter === 'v1' && n.st === 'limit')));
+}
+
+// the sheet
+const sheet = document.getElementById('sheet');
+let current = null;
+function names(list) { return list.map(n => `<b>${n.label}</b>`).join(', '); }
+function select(id) {
+  if (current) els[current].setAttribute('aria-pressed', 'false');
+  nodes.forEach(n => els[n.id].classList.remove('linked'));
+  if (current === id || !id) { current = null; sheet.hidden = true; return; }
+  current = id; const n = byId[id];
+  els[id].setAttribute('aria-pressed', 'true');
+  const up = n.deps.map(d => byId[d]).filter(Boolean), down = dependents(id);
+  [...up, ...down].forEach(x => els[x.id].classList.add('linked'));
+  document.getElementById('s-title').textContent = n.label;
+  document.getElementById('s-tag').textContent = STATUS[n.st].l + (n.size ? ' · size ' + n.size : '') + ' · ' + BRANCHES.find(b => b.id === n.b).t;
+  document.getElementById('s-what').textContent = n.what;
+  const parts = [];
+  if (up.length) parts.push('Hangs on ' + names(up) + '.');
+  if (down.length) parts.push('Needed by ' + names(down) + '.');
+  document.getElementById('s-dep').innerHTML = parts.join(' ');
+  sheet.hidden = false;
+}
+document.getElementById('s-close').onclick = () => select(null);
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && current) select(null); });
+
+// the curves from the hub to each branch
+const map = document.getElementById('map'), svg = document.getElementById('links'), hub = document.querySelector('#hub svg');
+function draw() {
+  if (getComputedStyle(svg).display === 'none') return;
+  const m = map.getBoundingClientRect(), c = hub.getBoundingClientRect();
+  const cy = c.top + c.height / 2 - m.top;
+  let d = '';
+  for (const br of BRANCHES) {
+    const r = heads[br.id].getBoundingClientRect(), y = r.top + r.height / 2 - m.top;
+    if (br.side === 'left') {
+      const x0 = c.left - m.left + 8, x1 = r.right - m.left + 6, mx = (x0 + x1) / 2;
+      d += `M${x0},${cy} C${mx},${cy} ${mx},${y} ${x1},${y} `;
+    } else {
+      const x0 = c.right - m.left - 8, x1 = r.left - m.left - 6, mx = (x0 + x1) / 2;
+      d += `M${x0},${cy} C${mx},${cy} ${mx},${y} ${x1},${y} `;
+    }
+  }
+  svg.innerHTML = `<path d="${d}"/>`;
+}
+new ResizeObserver(draw).observe(map);
+addEventListener('scroll', draw, { passive: true });
+document.fonts && document.fonts.ready.then(draw);
+draw();
+</script>
+
+</body>
+</html>

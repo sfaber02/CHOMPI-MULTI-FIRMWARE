@@ -1,0 +1,904 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>CIRCLES Math</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;400;500&family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;1,400&family=Martian+Mono:wght@400;500&family=Caveat:wght@600&family=Noto+Sans+Math&display=swap">
+<style>
+/* Layout: one reading column; each idea is a plate with a live phasor scope
+   (circles on the left, their shadows running right), the formula above and two
+   short notes below. Same editions as the CIRCLES tutorial: pink light, black dark. */
+:root {
+  --bg: #FAF4F0; --bg-2: #F3E5DE; --bg-3: #EAD4CA;
+  --ink: #241C22; --ink-2: #6F5F64; --line: #E3CEC4;
+  --trace: #C0913F; --accent: #B5601C; --accent-ink: #FFF8F2;
+  --c1: #B07A1E; /* bronze */ --c2: #2F78B8; /* vibes */ --c3: #C2413A; /* marimba */ --c4: #2E8A5E; /* kora */
+  --f-display: "Unbounded", "Futura", "Avenir Next", system-ui, sans-serif;
+  --f-body: "Schibsted Grotesk", "Helvetica Neue", Arial, "Noto Sans Math", sans-serif;
+  --f-data: "Martian Mono", "JetBrains Mono", ui-monospace, Menlo, "Noto Sans Math", monospace;
+  --f-pen: "Caveat", "Segoe Print", "Bradley Hand", cursive;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #110F0E; --bg-2: #1B1816; --bg-3: #26211D;
+  --ink: #F2EADB; --ink-2: #A99E8C; --line: #322B25;
+  --trace: #C9A15A; --accent: #F09A4E; --accent-ink: #1B0F05;
+  --c1: #D9AE55; --c2: #6BAEEA; --c3: #EE6D60; --c4: #5CC28F;
+  color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --bg: #110F0E; --bg-2: #1B1816; --bg-3: #26211D;
+  --ink: #F2EADB; --ink-2: #A99E8C; --line: #322B25;
+  --trace: #C9A15A; --accent: #F09A4E; --accent-ink: #1B0F05;
+  --c1: #D9AE55; --c2: #6BAEEA; --c3: #EE6D60; --c4: #5CC28F;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1000px; margin: 0 auto; padding-inline: 20px; padding-block: 40px 80px; }
+a { color: var(--accent); }
+h1, h2, h3 { font-family: var(--f-display); font-weight: 400; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(30px, 5.4vw, 54px); font-weight: 300; line-height: 1.08; letter-spacing: -.01em; }
+h2 { font-size: clamp(20px, 2.6vw, 26px); font-weight: 400; }
+h3 { font-size: clamp(18px, 2.2vw, 22px); font-weight: 400; }
+p { margin: 0; max-width: 66ch; }
+.eyebrow { font-family: var(--f-data); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-2); }
+.lead { font-size: 18px; max-width: 62ch; }
+.pen { font-family: var(--f-pen); color: var(--accent); font-size: 22px; line-height: 1.1; }
+code, .mono { font-family: var(--f-data); font-size: .82em; }
+
+header.top { display: grid; gap: 18px; padding-bottom: 28px; }
+
+/* the map */
+.map { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px 22px; margin-block: 10px 6px; }
+.fam { display: grid; gap: 8px; align-content: start; min-width: 0; }
+.fam h4 { margin: 0; font-family: var(--f-data); font-weight: 500; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; line-height: 1; padding: 6px 9px; border-radius: 999px; text-decoration: none; color: var(--ink); border: 1px solid var(--ink); white-space: nowrap; }
+.chip::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--ink); }
+.chip.b2 { border-color: var(--accent); }
+.chip.b2::before { background: transparent; border: 1.5px solid var(--accent); width: 5px; height: 5px; }
+.chip.no { border: 1px dashed var(--ink-2); color: var(--ink-2); }
+.chip.no::before { background: transparent; border: 1.5px dashed var(--ink-2); width: 5px; height: 5px; }
+a.chip:hover { background: var(--bg-2); }
+a.chip:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; color: var(--ink-2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; }
+
+/* parts and plates */
+.part { padding-top: 44px; display: grid; gap: 8px; }
+.part p { color: var(--ink-2); }
+.plate { border-top: 1px solid var(--line); padding-block: 34px 8px; display: grid; gap: 14px; scroll-margin-top: 16px; }
+.plate:first-of-type { border-top: 0; }
+.ph { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; }
+.ph h3 { flex: 1 1 260px; }
+.formula { font-family: var(--f-data); font-size: 13px; background: var(--bg-2); border-radius: 6px; padding: 9px 12px; overflow-x: auto; white-space: pre; color: var(--ink); }
+.scope { background: var(--bg-2); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.scope canvas { display: block; width: 100%; }
+.bar { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; }
+.ctl { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.ctl-l { font-family: var(--f-data); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); }
+.seg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--ink); border-radius: 8px; overflow: hidden; }
+.seg button { border: 0; border-right: 1px solid var(--line); }
+.seg button:last-child { border-right: 0; }
+button { font: 500 13px/1 var(--f-body); color: var(--ink); background: var(--bg); border: 1px solid var(--ink); border-radius: 8px; padding: 8px 10px; cursor: pointer; font-variant-numeric: tabular-nums; }
+button:hover { background: var(--bg-3); }
+button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+button.play { min-width: 64px; }
+button.listen[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+input[type=range] { accent-color: var(--accent); width: 150px; }
+output, .readout { font-family: var(--f-data); font-size: 12px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.readout { min-height: 1.4em; }
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px 32px; padding-top: 4px; }
+.notes > div { display: grid; gap: 4px; min-width: 0; }
+.notes .k { font-family: var(--f-data); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); }
+.notes .k.no { color: var(--accent); }
+.verdict { font-family: var(--f-pen); color: var(--accent); font-size: 21px; line-height: 1.1; }
+.chip.x { border: 1px solid var(--line); color: var(--ink-2); text-decoration: line-through; }
+.chip.x::before { background: var(--line); }
+.ctl-g { display: grid; gap: 10px; border-top: 1px solid var(--line); padding-top: 10px; width: 100%; }
+.ctl-g .row { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; }
+.gest { font-family: var(--f-pen); color: var(--accent); font-size: 18px; }
+.close { border-top: 1px solid var(--line); margin-top: 40px; padding-top: 34px; display: grid; gap: 14px; }
+.close ol { margin: 0; padding-left: 1.3em; display: grid; gap: 8px; max-width: 66ch; }
+@media (max-width: 520px) { .wrap { padding-inline: 16px; } .lead { font-size: 17px; } input[type=range] { width: 120px; } }
+/* the three CIRCLES pages */
+nav.site { display: flex; flex-wrap: wrap; gap: 6px 18px; padding-bottom: 26px; font-family: var(--f-data); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; }
+nav.site a { color: var(--ink-2); text-decoration: none; padding-bottom: 3px; border-bottom: 1px solid transparent; }
+nav.site a:hover { color: var(--ink); border-bottom-color: var(--line); }
+nav.site a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); }
+nav.site a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.plate > p { color: var(--ink-2); }
+.status { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px 32px; }
+.status > div { display: grid; gap: 8px; align-content: start; min-width: 0; }
+.status .chip { justify-self: start; }
+/* the formula, and the piece of it each plate is about */
+.formula em { font-style: normal; color: var(--accent); font-weight: 500; }
+.formula.big { font-size: 15px; line-height: 1.9; padding: 16px 18px; }
+.whole { display: grid; gap: 14px; padding-block: 8px 30px; }
+.whole > p { color: var(--ink-2); }
+.anat { display: grid; grid-template-columns: max-content 1fr 1fr max-content; gap: 0 18px; margin: 0; border-top: 1px solid var(--line); }
+.anat > div { display: contents; }
+.anat dt, .anat dd { margin: 0; padding: 9px 0; border-bottom: 1px solid var(--line); min-width: 0; }
+.anat dt { font-family: var(--f-data); font-size: 14px; color: var(--accent); }
+.anat dd { font-size: 14px; }
+.anat dd.on { color: var(--ink-2); }
+.anat dd.st { justify-self: start; align-self: center; padding: 0; border: 0; }
+.anat .chip { pointer-events: none; }
+@media (max-width: 720px) {
+  .anat { grid-template-columns: max-content 1fr; }
+  .anat dd.on { grid-column: 2; padding-top: 0; }
+  .anat dd:not(.st) { border-bottom: 0; }
+  .anat dd.st { grid-column: 2; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+  .anat dt { border-bottom: 0; grid-row: span 3; }
+}
+</style><style>
+nav.dev { display: flex; flex-wrap: wrap; gap: 6px 18px; padding-bottom: 26px; font-family: "Martian Mono", ui-monospace, monospace; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; }
+nav.dev a { color: var(--ink-2); text-decoration: none; padding-bottom: 3px; border-bottom: 1px solid transparent; }
+nav.dev a:hover { color: var(--ink); border-bottom-color: var(--line); }
+nav.dev a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); }
+nav.dev b { color: var(--accent); font-weight: 500; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav class="dev" aria-label="CIRCLES dev snapshot pages">
+  <b>Dev snapshot</b>
+  <a href="index.html">Snapshot</a>
+  <a href="tutorial.html">Tutorial</a>
+  <a href="math.html" aria-current="page">The math</a>
+  <a href="mindmap.html">Mind map</a>
+</nav>
+<header class="top">
+  <div class="eyebrow">CIRCLES · the math · 1.0 and the dev build</div>
+  <h1>Every player is a hand going round a circle</h1>
+  <p class="lead">Each player is a hand turning on a circle, once per loop. Its notes are marks on the circle, and a note sounds when the hand passes its mark. One formula says how fast every hand turns. This page puts that formula first, then shows what each part of it does: what CIRCLES 1.0 uses, what the dev build adds, and what would fit but isn't in yet.</p>
+  <div class="legend" aria-label="How to read the scopes">
+    <span><i style="background:var(--ink)"></i>note played</span>
+    <span><i style="border:2px solid var(--accent)"></i>note folded back by a shorter length</span>
+    <span><i style="border:1.5px solid var(--ink-2)"></i>note skipped</span>
+    <span><i style="border:1.5px solid var(--c2);opacity:.6"></i>echo</span>
+    <span><i style="background:var(--line);border-radius:0;width:2px;height:12px"></i>L0 beat</span>
+    <span><i style="border:1.5px dashed var(--ink-2)"></i>dashed wave: where the player would be in step</span>
+    <span class="pen" style="font-size:18px">meet</span><span style="margin-left:-12px">all players at the start of their figure</span>
+  </div>
+</header>
+
+<section class="whole" id="formula">
+  <div class="eyebrow">The formula</div>
+  <h2>One formula for all of CIRCLES</h2>
+  <div class="formula big">dθ<sub>i</sub>/dt = m<sub>i</sub> / (L0 · E · R<sub>i</sub>)
+m<sub>i</sub> = 1 + δ<sub>i</sub> + K · sin 2π(g<sub>i</sub> − θ<sub>i</sub>)        0.5 ≤ m<sub>i</sub> ≤ 1.5
+note k of player i sounds when θ<sub>i</sub> passes a<sub>k</sub> / R<sub>i</sub>  (mod 1)</div>
+  <p>Read it as three sentences. The hand of player i turns once per loop. It turns at a speed of its own, m. Each note sounds when the hand passes its mark. Everything on this page is one of these symbols at work, so every section below starts with its piece of the formula, marked in colour.</p>
+  <dl class="anat" aria-label="The symbols">
+    <div><dt>θ<sub>i</sub></dt><dd>Where player i's hand is, in turns: 0 is the start of its loop, 1 a full round.</dd><dd class="on">The circle.</dd><dd class="st"><span class="chip">In 1.0</span></dd></div>
+    <div><dt>L0</dt><dd>The conductor's length, the only beat CIRCLES has. Nothing pulls it.</dd><dd class="on">CHOMPI + wheel. 2 s at power-on.</dd><dd class="st"><span class="chip">In 1.0</span></dd></div>
+    <div><dt>E</dt><dd>The ensemble length, one of the ten ratios: a tempo for everyone.</dd><dd class="on">Switch on all, CHOMPI + black key.</dd><dd class="st"><span class="chip">In 1.0</span></dd></div>
+    <div><dt>R<sub>i</sub></dt><dd>The player's length, one of ten ratios from 1/3 to 3.</dd><dd class="on">CHOMPI + black key.</dd><dd class="st"><span class="chip">In 1.0</span></dd></div>
+    <div><dt>a<sub>k</sub></dt><dd>When note k came, counted from the figure's start in L0 · E. Its mark sits at a<sub>k</sub> / R<sub>i</sub> of a turn.</dd><dd class="on">The figure, kept with loop.</dd><dd class="st"><span class="chip">In 1.0</span></dd></div>
+    <div><dt>m<sub>i</sub></dt><dd>The player's speed: 1 is in step. In 1.0 it is always exactly 1.</dd><dd class="on">The three symbols below.</dd><dd class="st"><span class="chip b2">Dev build</span></dd></div>
+    <div><dt>δ<sub>i</sub></dt><dd>Detune: how much faster or slower the player wants to run.</dd><dd class="on">Play held + wheel, 0.1 % a click, up to ±5 %.</dd><dd class="st"><span class="chip b2">Dev build</span></dd></div>
+    <div><dt>K</dt><dd>The pull towards the ghost, one amount for everyone.</dd><dd class="on">On all, loop held + wheel. 4 % at power-on, up to 20 %.</dd><dd class="st"><span class="chip b2">Dev build</span></dd></div>
+    <div><dt>g<sub>i</sub></dt><dd>The ghost, (B − h<sub>i</sub>) / R<sub>i</sub>: where the hand would be had it stayed in step with L0. B counts L0 beats; h<sub>i</sub> is the beat its loop started on.</dd><dd class="on">The dashed hand in the scopes.</dd><dd class="st"><span class="chip b2">Dev build</span></dd></div>
+  </dl>
+  <p>Two things sit outside the formula, as rules on top of it. <b>Jumps</b>: a new length (R changes), and in the dev build a kick, which moves the hand. Between jumps, the formula runs. <b>The feel</b>: it moves each mark a little at random and changes each note's loudness; the hand itself is never touched.</p>
+  <p><b>1.0 in one line.</b> With m = 1 the formula solves itself: θ<sub>i</sub> = (B − h<sub>i</sub>) / R<sub>i</sub>, so note k of player i plays on the beats B = h<sub>i</sub> + (a<sub>k</sub> mod R<sub>i</sub>) + n · R<sub>i</sub>, for every whole n. Each player is a periodic signal and CIRCLES is their sum. The dev build makes m move, so the hand can leave its ghost and come back.</p>
+</section>
+
+<section class="plate" id="ensemble" data-plate="ensemble">
+  <div class="ph"><h3>With m = 1: three loops add up</h3><span class="chip">In 1.0</span></div>
+  <div class="formula"><em>m = 1</em>:  θ<sub>i</sub> = (B − h<sub>i</sub>) / R<sub>i</sub>    note k on the beats h<sub>i</sub> + (a<sub>k</sub> mod R<sub>i</sub>) + n · R<sub>i</sub>
+R = 1, 1, 5/4    together periodic, every lcm(1, 5/4) = 5 L0</div>
+  <p>Each scope runs live. Press <b>Listen</b> on one to hear it; only one plays at a time. The scopes run a small model in the browser, written to behave like the firmware, with a simple struck-bar sound.</p>
+</section>
+
+<section id="map" class="part">
+  <div class="eyebrow">The map</div>
+  <h2>What math knows about periodic signals, and where CIRCLES stands</h2>
+  <div class="map">
+    <div class="fam"><h4>Frequency and phase</h4><div class="chips">
+      <a class="chip" href="#period">Period, ratio</a>
+      <a class="chip" href="#window">Window and wrap</a>
+      <a class="chip" href="#window">Tempo (time scaling)</a>
+      <a class="chip" href="#phasing">Phasing by length</a>
+      <a class="chip b2" href="#phase">Phase (kick)</a>
+      <a class="chip b2" href="#detune">Detune</a>
+      <a class="chip b2" href="#model">Pull to the ghost</a>
+      <a class="chip b2" href="#model">Glide home</a>
+      <a class="chip no" href="#pulses">Lengths in pulses</a>
+      <a class="chip no" href="#coupling">Coupling</a>
+      <a class="chip no" href="#detune">Chirp</a>
+      <a class="chip x" href="#sync">Hard sync</a>
+    </div></div>
+    <div class="fam"><h4>Shape of the figure</h4><div class="chips">
+      <a class="chip" href="#ensemble">Waveform = figure</a>
+      <span class="chip">Copy</span>
+      <span class="chip">Octave (pitch × 2<sup>n</sup>)</span>
+      <a class="chip no" href="#mirror">Retrograde</a>
+      <a class="chip no" href="#mirror">Inversion</a>
+      <a class="chip no" href="#mirror">Transposition</a>
+    </div></div>
+    <div class="fam"><h4>Amplitude</h4><div class="chips">
+      <span class="chip">Level</span>
+      <span class="chip">Mute, listen (gate)</span>
+      <a class="chip" href="#window">Divider (by length)</a>
+      <a class="chip no" href="#am">Slow cycles (any knob)</a>
+    </div></div>
+    <div class="fam"><h4>Noise and combining</h4><div class="chips">
+      <a class="chip" href="#feel">Jitter (feel)</a>
+      <a class="chip" href="#period">Sum, lcm</a>
+      <a class="chip no" href="#model">Wander (phase noise)</a>
+      <a class="chip no" href="#feedback">Feedback (comb)</a>
+    </div></div>
+  </div>
+  <div class="legend"><span class="chip" style="pointer-events:none">in 1.0</span><span class="chip b2" style="pointer-events:none">dev build</span><span class="chip no" style="pointer-events:none">not in yet</span><span class="chip x" style="pointer-events:none">doesn't fit</span></div>
+</section>
+
+<section class="part">
+  <div class="eyebrow">Part one</div>
+  <h2>In CIRCLES 1.0</h2>
+  <p>Lengths, windows, tempo, phasing by length, and the feel. Everything in this part is in the released firmware.</p>
+</section>
+
+<section class="plate" id="period" data-plate="period">
+  <div class="ph"><div class="eyebrow">Period · frequency</div></div>
+  <div class="ph"><h3>Lengths are periods, and rational ones always meet</h3><span class="chip">In 1.0</span></div>
+  <div class="formula">dθ<sub>i</sub>/dt = 1 / (L0 · E · <em>R<sub>i</sub></em>)    one turn takes L0 · E · R<sub>i</sub>: that is the period
+R ∈ {1/3, 1/2, 2/3, 3/4, 1, 5/4, 4/3, 3/2, 2, 3}    two players meet every lcm(p<sub>1</sub>/q<sub>1</sub>, p<sub>2</sub>/q<sub>2</sub>) = lcm(p<sub>1</sub>, p<sub>2</sub>) / gcd(q<sub>1</sub>, q<sub>2</sub>) L0</div>
+  <div class="notes">
+    <div><span class="k">Math</span><p>A periodic signal is fixed by its period. Two periods in a rational ratio p/q line up again after their least common multiple, and the sum repeats from there.</p></div>
+    <div><span class="k">In CIRCLES</span><p>The black keys (CHOMPI held): ten rational ratios, 1/3, 1/2, 2/3, 3/4, 1, 5/4, 4/3, 3/2, 2 and 3. Any two players meet again within 20 L0 (×5/4 against ×4/3 is the slowest pair); all ten lengths together repeat after 60 L0.</p></div>
+  </div>
+</section>
+
+<section class="plate" id="window" data-plate="window">
+  <div class="ph"><div class="eyebrow">Period change · time scaling · time aliasing</div></div>
+  <div class="ph"><h3>R and E: two ways to change a period</h3><span class="chip">In 1.0</span></div>
+  <div class="formula">player length:    dθ/dt = 1 / (L0 · E · <em>R</em>)    mark = a<sub>k</sub> / <em>R</em> mod 1    R in both: every note keeps its time, what lies past the end folds round
+ensemble length:  dθ/dt = 1 / (L0 · <em>E</em> · R)    mark = a<sub>k</sub> / R mod 1        E in the speed only: the marks stay, everything stretches</div>
+  <div class="notes">
+    <div><span class="k">Math</span><p>Scale time and the whole waveform stretches. Or keep the waveform and change only the period: the signal is cut to a window and folded back, <span class="mono">t mod T</span>. That folding is time aliasing.</p></div>
+    <div><span class="k">In CIRCLES</span><p>A player's length R is in both places, so they cancel: a note plays a<sub>k</sub> into the loop, as it was played, and a note past the new end folds round (the rings). The ensemble length E is only in the speed, so it is a tempo: everything stretches together. One side effect: a ×1 figure at length ×3 is a frequency divider, heard every third L0 with its shape intact.</p></div>
+  </div>
+</section>
+
+<section class="plate" id="phasing" data-plate="phasing">
+  <div class="ph"><div class="eyebrow">Phase · what a length change does to it</div></div>
+  <div class="ph"><h3>Phasing in 1.0: a new length lands on the L0 beat and keeps the time</h3><span class="chip">In 1.0</span></div>
+  <div class="formula">a new <em>R</em> on the next L0 beat:  θ ← θ · R<sub>old</sub> / R<sub>new</sub>    the time in the loop, θ · R, is kept; the angle θ jumps
+after n L0 at ×5/4, back to ×1:  θ − g = (n mod 5/4) mod 1  =  0, ¾, ½, ¼, 0 …  for n = 1, 2, 3, 4, 5
+the dev build: a new R waits for θ = 0, where both agree, so nothing jumps</div>
+  <div class="notes">
+    <div><span class="k">Math</span><p>When a period changes there are two choices: keep the phase (the hand's angle) or keep the time since the loop began. Keeping the phase is true phasing: any shift is possible. Keeping the time means the angle jumps, because angle = time ÷ length.</p></div>
+    <div><span class="k">In CIRCLES</span><p>1.0 keeps the time, and only on an L0 beat. So after a detour a copy lands on the L0 grid: back in step after 1 L0 at ×5/4, and a quarter, half or three quarters off after 2, 3 or 4 L0. ×4/3 gives thirds, ×3/2 halves, ×2 and ×3 always land in step. The dev build changes this (Part two): a new length lands at the player's own loop start and keeps its phase, so nothing jumps.</p></div>
+  </div>
+</section>
+
+<section class="plate" id="feel" data-plate="feel">
+  <div class="ph"><div class="eyebrow">Noise · jitter</div></div>
+  <div class="ph"><h3>The feel is noise on phase and amplitude</h3><span class="chip">In 1.0</span></div>
+  <div class="formula">mark = a<sub>k</sub> / R<sub>i</sub> <em>+ ε</em>    |ε| ≤ 30 ms · feel, drawn anew each repeat
+loudness · swell · (1 − 0.35 · feel · u)    skipped with p = 0.3 · max(feel − ½, 0)    u, ε: random</div>
+  <div class="notes">
+    <div><span class="k">Math</span><p>Random phase jitter, random amplitude and random dropouts. All of it is noise around a periodic signal; nothing here is periodic itself.</p></div>
+    <div><span class="k">In CIRCLES</span><p>K2 with CHOMPI held. Drawn to scale: 30 ms is 1.5 % of a 2-second L0, so you hear it better than you see it. Above half, notes start to drop out. The swell, a slow drift of loudness, is random from round to round. The feel moves the marks, never the hand, so the jitter never adds up: each repeat is late or early against the player's own place, which stays where it is.</p></div>
+  </div>
+</section>
+
+<section class="part">
+  <div class="eyebrow">Part two</div>
+  <h2>In the dev build</h2>
+  <p>The dev build is in development. It gives every player a speed of its own, through one equation: players can drift, be kicked out of step, and find their way back. It also clicks on every L0 until the first figure is kept; L0 is the only beat CIRCLES has, so there is nothing else to count.</p>
+</section>
+
+<section class="plate" id="phase" data-plate="phase">
+  <div class="ph"><div class="eyebrow">Phase</div></div>
+  <div class="ph"><h3>A kick changes a player's phase, not its figure</h3><span class="chip b2">Dev build</span></div>
+  <div class="formula"><em>θ<sub>i</sub> ← θ<sub>i</sub> − n/64</em>    a jump of the hand; the marks stay    one click of the wheel = a 64th of the loop</div>
+  <div class="notes">
+    <div><span class="k">Math</span><p>Shifting a periodic signal in time moves its phase. On the circle the hand jumps forward or back against the marks; the marks themselves stay where they are.</p></div>
+    <div><span class="k">In CIRCLES</span><p>Loop held + wheel kicks the chosen player a 64th of its length per click, right for later: its hand goes back a little, so its notes come later. With the pull on (below), it then drifts back towards its place; loop held + push lets it glide home. This scope shows the kick without the pull, so the copy stays where you put it. The dashed wave in the copy's row is its source: in step, the two waves lie on top of each other; after a kick they come apart. Time runs from the circles to the right, so the shift starts at the circle and travels across; what was already played stays as it was.</p></div>
+  </div>
+</section>
+
+<section class="plate" id="detune" data-plate="detune">
+  <div class="ph"><div class="eyebrow">Continuous frequency · quasi-periodicity</div></div>
+  <div class="ph"><h3>Detune: speeds between the black keys</h3><span class="chip b2">Dev build</span></div>
+  <div class="formula">m<sub>i</sub> = 1 + <em>δ<sub>i</sub></em>   (K = 0)    the hand gains δ of a turn on its ghost every loop    back in step after 1/δ loops    δ irrational: never exactly</div>
+  <div class="notes">
+    <div><span class="k">Math</span><p>Frequency is continuous. Between the rational ratios lie ratios that never meet again, and the sum becomes quasi-periodic. A frequency that itself moves is a chirp, an accelerando; Nancarrow built tempo canons that way (not in CIRCLES).</p></div>
+    <div><span class="k">In CIRCLES</span><p>Play held + wheel detunes the chosen player, 0.1 % a click, up to 5 % either way; play held + push makes it exact again. Piano Phase without hands: a copy drifts slowly through every phase against its source. This scope shows detune without the pull; with the pull on, a small detune locks instead (below). The dashed wave in the copy's row is its source: the copy's wave slides slowly away from it and comes back.</p></div>
+  </div>
+</section>
+
+<section class="plate" id="model" data-plate="model">
+  <div class="ph"><div class="eyebrow">Phase-locked loops · Adler's equation</div></div>
+  <div class="ph"><h3>The whole speed: detune, pull, kick and the way home</h3><span class="chip b2">Dev build</span></div>
+  <div class="formula">m<sub>i</sub> = 1 + δ<sub>i</sub> + <em>K · sin 2π(g<sub>i</sub> − θ<sub>i</sub>)</em>     0.5 ≤ m ≤ 1.5     g<sub>i</sub> = (B − h<sub>i</sub>) / R<sub>i</sub>, the ghost, locked to L0
+how far off, ψ = g − θ:  dψ/dt = −(δ + K · sin 2πψ) / (L0 · E · R)    Adler's equation
+|δ| &lt; K: locks, asin(|δ|/K) / 2π of a turn off its ghost (fast: ahead, slow: behind)     |δ| &gt; K: slips round, lingering near home
+glide home:  K → max(K, 0.3), δ → 0, until |ψ| &lt; 1/256
+not in yet (the last row):  + C · Σ<sub>j</sub> sin 2π(θ<sub>j</sub> − θ<sub>i</sub>), listening to each other,  + σ · ξ(t), wander</div>
+  <div class="notes">
+    <div><span class="k">The rules</span><p>The figure itself never changes; only when its notes come does. Time never runs backwards or stops: speed stays between half and one and a half. L0 is the conductor and is never pulled. Nothing jumps but deliberate acts: a kick, and a new length, which lands at the player's own loop start. The dashed hand on each circle is the player's ghost: where it would be had it stayed in step with L0, and the dashed wave is the ghost's shadow. The arc between hand and ghost is how far off it is.</p></div>
+    <div><span class="k">In CIRCLES</span><p>The pull K is one amount for everyone: 4 % at power-on, switch on all + loop held + wheel, 0.5 % a click up to 20 %. Gliding home pulls with at least 30 % and ignores the detune until the player is within 1/256 of a turn. In this scope vibes is 2.5 % fast and the 4 % pull holds it, a little ahead of its ghost; kora is 5 % slow, more than the pull can hold, so it slips round about once a minute. The two sliders on the last row, listening to each other and wander, are not in CIRCLES (Part three).</p></div>
+  </div>
+</section>
+
+<section class="part">
+  <div class="eyebrow">Part three</div>
+  <h2>Possible, not in yet</h2>
+  <p>Each of these fits the math CIRCLES is built on. None is promised: a new idea goes in only after someone misses it while playing, and after it has been tried in a simulation of the firmware.</p>
+</section>
+
+<section class="plate" id="coupling" data-plate="coupling">
+  <div class="ph"><div class="eyebrow">Coupled oscillators · Kuramoto model</div></div>
+  <div class="ph"><h3>Coupling: players that listen to each other</h3><span class="chip no">Not in yet</span></div>
+  <div class="formula">m<sub>i</sub> = 1 + δ<sub>i</sub> + K · sin 2π(g<sub>i</sub> − θ<sub>i</sub>) <em>+ (C/N) · Σ<sub>j</sub> sin 2π(θ<sub>j</sub> − θ<sub>i</sub>)</em>    j: the players of the same length
+Kuramoto model    order r = |mean e<sup>2πiθ</sup>|, 1 = all in step</div>
+  <div class="notes">
+    <div><span class="k">Math</span><p>Slightly detuned oscillators that nudge each other's phase. With weak coupling they drift; above a threshold they lock. Clapping audiences, fireflies and pendulum clocks on one wall all do this.</p></div>
+    <div><span class="k no">What it would add</span><p>In the dev build every player is pulled towards its own ghost, never towards the others. Coupling would add a pull between players of the same length, so detuned copies find each other wherever they are, not only at home.</p></div>
+  </div>
+</section>
+
+<section class="plate" id="mirror" data-plate="mirror">
+  <div class="ph"><div class="eyebrow">Symmetries of a periodic signal</div></div>
+  <div class="ph"><h3>Retrograde, inversion, transposition</h3><span class="chip no">Not in yet</span></div>
+  <div class="formula">retrograde: <em>a<sub>k</sub> → R − a<sub>k</sub></em>    inversion: <em>pitch p → 2c − p</em>    transposition: <em>p → p + k</em>    the hand's equation stays; only the marks and the notes change
+(1.0 has E, the tempo, and p → p + 12n, the octave; the dev build adds θ → θ − n/64, the kick)</div>
+  <div class="notes">
+    <div><span class="k">Math</span><p>A signal can be mirrored in time and in value, and shifted in value, without changing its period. With time shift and scaling these are the moves that keep it recognisably the same figure. The spokes on the circles show pitch: longer is higher.</p></div>
+    <div><span class="k no">What it would add</span><p>A new figure from a kept one without playing it: the copy runs backwards or upside down. Canons have done this for six hundred years, and it suits passing figures around.</p></div>
+  </div>
+</section>
+
+<section class="plate" id="am" data-plate="am">
+  <div class="ph"><div class="eyebrow">Modulation · LFO</div></div>
+  <div class="ph"><h3>Slow cycles on any knob, each on a period of its own</h3><span class="chip no">Not in yet</span></div>
+  <div class="formula">any knob of player i becomes a function of time:  <em>level<sub>i</sub>(t) = level<sub>0</sub> + d · ½ (1 − cos 2πt / T<sub>m</sub>)</em>
+T<sub>m</sub> = n · L0, a period of its own, unrelated to R    the whole repeats after the lcm of all periods</div>
+  <div class="notes">
+    <div><span class="k">Math</span><p>A slow periodic modulation of any parameter. Each player then has two cycles: its figure, and a slow one over it. On level it's amplitude modulation (the wave's height); on the other knobs the dashed line shows it.</p></div>
+    <div><span class="k no">What it would add</span><p>Eno's <i>Music for Airports</i>: loops of unrelated lengths fading in and out, so the ensemble gets a long arc nobody has to play. Every player knob could take it: level, brightness, decay, strike, pan, feel. Periods counted in L0 keep it with the tempo. Today's swell is random per round, not a cycle.</p></div>
+  </div>
+</section>
+
+<section class="plate" id="feedback" data-plate="feedback">
+  <div class="ph"><div class="eyebrow">Feedback · comb filter</div></div>
+  <div class="ph"><h3>Feedback: the figure echoes itself</h3><span class="chip no">Not in yet</span></div>
+  <div class="formula">on the sound, after the formula:  <em>y(t) = x(t) + g · y(t − D)</em>    D = L0 · E · r, so a new tempo moves the echoes with it</div>
+  <div class="notes">
+    <div><span class="k">Math</span><p>A delay fed back into itself, a comb filter. In time every note gets a fading train of copies, D apart.</p></div>
+    <div><span class="k no">What it would add</span><p>A delay whose time is a ratio of L0, so it follows the tempo (try the ensemble length). With D at another ratio than the figure, the echoes make a second rhythm against it. One shared send for the whole ensemble would be enough; fifteen would cost too much.</p></div>
+  </div>
+</section>
+
+<section class="plate" id="pulses">
+  <div class="ph"><div class="eyebrow">Integer periods · Clapping Music</div></div>
+  <div class="ph"><h3>Lengths in pulses</h3><span class="chip no">Not in yet</span></div>
+  <div class="formula"><em>R<sub>i</sub> = n / 8</em>, n = 1 … 24, instead of the ten ratios    n against 8: the marks move one pulse a round, always on the pulse</div>
+  <div class="notes">
+    <div><span class="k">Math</span><p>A finer set of rational periods with one common unit. Two periods of n and m pulses meet after lcm(n, m) pulses, and between meetings the offset moves in whole pulses, never between them.</p></div>
+    <div><span class="k no">What it would add</span><p>In C's odd lengths (7, 9, 11, 13 pulses) and Reich's <i>Clapping Music</i> in steps: 7 pulses against 8 moves one pulse per round. It deepens the idea of a length instead of adding a new one. The cost: ×4/3, ×2/3 and ×1/3 don't fit 8 pulses.</p></div>
+  </div>
+</section>
+
+<section class="plate" id="sync">
+  <div class="ph"><div class="eyebrow">Hard sync</div></div>
+  <div class="ph"><h3>Hard sync doesn't fit CIRCLES</h3><span class="chip x">Doesn't fit</span></div>
+  <div class="formula"><em>θ<sub>i</sub> ← 0</em> on every L0 beat    a jump on every beat: the hand never gets past its first L0</div>
+  <div class="notes">
+    <div><span class="k">Math</span><p>On a synthesizer an oscillator's period sets how fast its waveform runs. A master restarts it every cycle, so a slave with another speed is cut at a different point of its wave, and sweeping its speed sweeps the sound.</p></div>
+    <div><span class="k">Why not here</span><p>In CIRCLES a length doesn't change how fast the notes run; it only sets the window. Restarting every figure on the L0 beat would just play its first L0, which is length ×1 without the folding. It adds nothing, so it stays out.</p></div>
+  </div>
+</section>
+
+<section class="close">
+  <div class="eyebrow">In short</div>
+  <h2>Where CIRCLES stands</h2>
+  <p>In 1.0 the speed m is always 1 and the formula solves itself. The dev build lets m move. What is not in yet would add a term to m, or change the marks, the knobs or the sound.</p>
+  <div class="status">
+    <div><span class="chip" style="pointer-events:none">In 1.0</span><p>Periods as ten rational ratios of one L0; a length is a window, the ensemble length a tempo; phasing by length, on the L0 grid; copy and octave; the feel as noise on time and loudness.</p></div>
+    <div><span class="chip b2" style="pointer-events:none">Dev build</span><p>A speed of its own for every player: detune, a pull towards its ghost, kicks and a glide home; a new length lands at the player's own loop start; a click on L0 until the first figure.</p></div>
+    <div><span class="chip no" style="pointer-events:none">Not in yet</span><p>Coupling between players, wander, retrograde and inversion, slow cycles on any knob, a delay timed in L0, lengths in pulses.</p></div>
+  </div>
+</section>
+</div>
+
+<script>
+(() => {
+const L0 = 2; // seconds per L0 in these sketches
+const R10 = [[1,3],[1,2],[2,3],[3,4],[1,1],[5,4],[4,3],[3,2],[2,1],[3,1]];
+const gcd = (a, b) => b ? gcd(b, a % b) : a;
+const lcm = (a, b) => a / gcd(a, b) * b;
+const fr = ([p, q]) => q === 1 ? `${p}` : `${p}/${q}`;
+const lenOf = p => p.r[0] / p.r[1];
+const frac = x => x - Math.floor(x);
+const meetL0 = rs => { let n = 1, d = 0; for (const [p, q] of rs) { const g = gcd(p, q); n = lcm(n, p / g); d = gcd(d, q / g); } return n / d; };
+const mmss = s => { s = Math.round(s); const h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60, x = s % 60; return (h ? h + ' h ' : '') + (m ? m + ' min ' : '') + (x || (!h && !m) ? x + ' s' : ''); };
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// ---------- sound: a small struck bar ----------
+let ac = null, master = null, listener = null;
+function audio() {
+  if (!ac) {
+    ac = new (window.AudioContext || window.webkitAudioContext)();
+    master = ac.createGain(); master.gain.value = .55;
+    const comp = ac.createDynamicsCompressor(); master.connect(comp); comp.connect(ac.destination);
+  }
+  if (ac.state === 'suspended') ac.resume();
+}
+function ping(midi, gain, pan, delay, bright = .45) {
+  if (!ac) return;
+  const t = ac.currentTime + .04 + Math.max(0, delay), f = 440 * Math.pow(2, (midi - 69) / 12);
+  const out = ac.createStereoPanner ? ac.createStereoPanner() : ac.createGain();
+  if (out.pan) out.pan.value = pan;
+  out.connect(master);
+  const g = ac.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.2 * gain, t + .004); g.gain.exponentialRampToValueAtTime(.0004, t + 1.3);
+  const g2 = ac.createGain(); g2.gain.setValueAtTime((.005 + .15 * bright) * gain, t); g2.gain.exponentialRampToValueAtTime(.0004, t + .08 + .3 * bright);
+  const o = ac.createOscillator(); o.frequency.value = f; o.connect(g); g.connect(out);
+  const o2 = ac.createOscillator(); o2.frequency.value = f * 3.93; o2.connect(g2); g2.connect(out);
+  o.start(t); o2.start(t); o.stop(t + 1.4); o2.stop(t + .45);
+}
+
+// ---------- colours from the page tokens ----------
+let C = {};
+function readColors() {
+  const s = getComputedStyle(document.documentElement), v = n => s.getPropertyValue(n).trim();
+  C = { ink: v('--ink'), ink2: v('--ink-2'), line: v('--line'), accent: v('--accent'), bg2: v('--bg-2'), c1: v('--c1'), c2: v('--c2'), c3: v('--c3'), c4: v('--c4') };
+}
+
+// ---------- the model ----------
+function player(o) {
+  return Object.assign({ name: '', col: 'c1', fig: [], r: [1, 1], slide: 0, det: 1, rev: false, inv: false, tr: 0, axis: 66,
+    amP: 0, amPh: 0, sync: false, echo: null, feel: 0, swell: 1, th: 0, hits: [], lastWrap: -1e9, tmp: null, pan: 0, showRatio: true }, o);
+}
+
+class Plate {
+  constructor(sec, cfg) {
+    this.sec = sec; this.cfg = cfg; this.id = sec.dataset.plate;
+    this.P = cfg.players.map(player);
+    this.t = 0; this.B = 0; this.e = 1; this.K = cfg.K || 0; this.win = cfg.win || 12;
+    this.ev = []; this.pend = []; this.trace = this.P.map(() => []); this.meets = []; this.grid = [];
+    this.playing = !reduced; this.visible = false; this.quiet = false;
+    const all = this.P.flatMap(p => p.fig.map(n => n[1]));
+    this.pmin = Math.min(...all) - 7; this.pmax = Math.max(...all) + 7;
+    // DOM: scope + bar + readout, inserted after the formula
+    const scope = document.createElement('div'); scope.className = 'scope';
+    this.cv = document.createElement('canvas'); this.cv.setAttribute('role', 'img');
+    this.cv.setAttribute('aria-label', cfg.aria || 'Live phasor scope');
+    scope.append(this.cv);
+    const bar = document.createElement('div'); bar.className = 'bar';
+    this.playBtn = mkBtn(this.id + '-play', this.playing ? 'Pause' : 'Play', () => { this.playing = !this.playing; this.playBtn.textContent = this.playing ? 'Pause' : 'Play'; });
+    this.playBtn.classList.add('play');
+    this.listenBtn = mkBtn(this.id + '-listen', 'Listen', () => setListener(listener === this ? null : this));
+    this.listenBtn.classList.add('listen'); this.listenBtn.setAttribute('aria-pressed', 'false');
+    const base = document.createElement('div'); base.className = 'ctl'; base.append(this.playBtn, this.listenBtn);
+    bar.append(base);
+    if (cfg.controls) cfg.controls(this, bar);
+    this.out = document.createElement('div'); this.out.className = 'readout'; this.out.setAttribute('aria-live', 'off');
+    const anchor = sec.querySelector('.formula');
+    anchor.after(scope, bar, this.out);
+    this.ctx = this.cv.getContext('2d');
+    new ResizeObserver(() => this.size()).observe(scope);
+    this.size();
+    // run silently so the scope opens with history
+    this.quiet = true; const h = 1 / 60; for (let s = 0; s < (cfg.pre || this.win + 1); s += h) this.step(h); this.quiet = false;
+    this.n = 0;
+  }
+  size() {
+    const w = this.cv.parentElement.clientWidth || 600, dpr = Math.min(2, devicePixelRatio || 1);
+    this.R = w < 480 ? 21 : 28; this.lh = 2 * this.R + (w < 480 ? 20 : 26);
+    this.top = 10; this.W = w; this.H = this.top * 2 + this.P.length * this.lh + 6;
+    this.cv.width = Math.round(w * dpr); this.cv.height = Math.round(this.H * dpr);
+    this.cv.style.height = this.H + 'px';
+    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    this.cx = 12 + this.R + (w < 480 ? 2 : 10); this.x0 = this.cx + this.R + (w < 480 ? 14 : 22);
+  }
+  pos(p, j) {
+    const [b0, pt] = p.fig[j], L = lenOf(p), b = b0 + p.slide;
+    let q = (((b % L) + L) % L) / L;
+    if (p.rev) q = frac(1 - q);
+    let pitch = p.inv ? 2 * p.axis - pt : pt; pitch += p.tr;
+    return { q, wrapped: b0 >= L - 1e-9, pitch };
+  }
+  ghost(p, B) { return (B - (p.seam || 0)) / lenOf(p); }
+  err(p, B) { let e = frac(this.ghost(p, B) - p.th); if (e > .5) e -= 1; return e; } // ghost minus hand, in rounds
+  mod(p, B) { return .5 - .5 * Math.cos(2 * Math.PI * (B / p.amP + p.amPh)); }
+  amp(p, B) { return p.amP && (p.modT || 'level') === 'level' ? .04 + .96 * this.mod(p, B) : 1; }
+  reach(p) { const L = lenOf(p); return p.sync && L > 1 ? 1 / L : 1; } // part of the cycle a synced player ever reaches
+  step(dt) {
+    const br = 1 / (L0 * this.e), t0 = this.t, t1 = t0 + dt, B0 = this.B, B1 = B0 + dt * br;
+    this.t1 = t1; this.br = br; this.t0 = t0; this.B0 = B0;
+    const P = this.P, N = P.length;
+    let rates = P.map(p => br / lenOf(p) * p.det);
+    if (this.cfg.model) rates = P.map(p => {
+      const e = this.err(p, B0), Kp = p.home ? Math.max(this.Kh, .3) : this.Kh;
+      let m = (p.home ? 1 : p.det) + Kp * Math.sin(2 * Math.PI * e);
+      if (this.Km) { let c = 0, n = 0; P.forEach(o => { if (o !== p && o.r[0] * p.r[1] === o.r[1] * p.r[0]) { c += Math.sin(2 * Math.PI * (o.th - p.th)); n++; } }); if (n) m += this.Km * c / n; }
+      if (this.wander) { p.nz = (p.nz || 0) * (1 - dt / 2) + Math.sqrt(dt) * (Math.random() + Math.random() + Math.random() - 1.5) * 1.4; m += this.wander * .06 * p.nz; }
+      return br / lenOf(p) * Math.min(1.5, Math.max(.5, m));
+    });
+    if (this.K) {
+      const ph = P.map(p => 2 * Math.PI * p.th);
+      rates = rates.map((r, i) => { let c = 0; for (let j = 0; j < N; j++) c += Math.sin(ph[j] - ph[i]); return r + this.K / (2 * Math.PI) * c / N; });
+    }
+    P.forEach((p, i) => {
+      const a = p.th;
+      if (p.sync) {
+        const L = lenOf(p), M = Math.ceil(1 / L - 1e-9), th = B => Math.floor(B) * M + frac(B) / L;
+        if (p.resync) { p.th = th(B0); p.resync = false; }
+        if (Math.floor(B1) > Math.floor(B0)) {
+          const tb = t0 + (Math.floor(B1) - B0) / br, s = Math.floor(B1) * M;
+          this.sweep(p, i, p.th, Math.floor(B0) * M + 1 / L - 1e-9, t0, tb);
+          this.sweep(p, i, s - 1e-7, th(B1), tb, t1);
+        } else this.sweep(p, i, p.th, th(B1), t0, t1);
+      } else this.sweep(p, i, a, a + rates[i] * dt, t0, t1);
+      if (p.tmp && p.th >= p.tmp.until) { p.r = p.tmp.back; p.tmp = null; }
+    });
+    for (let n = Math.floor(B0) + 1; n <= B1; n++) this.grid.push({ tau: t0 + (n - B0) / br, n });
+    const nb = Math.floor(B1);
+    if (nb > Math.floor(B0) && this.pendE) { this.e = this.pendE; this.pendE = null; } // the ensemble length, on the beat
+    if (nb > Math.floor(B0)) { // as beta 1: a new length lands on the L0 beat and keeps the time in the loop
+      const tbeat = t0 + (nb - B0) / br, ov = B1 - nb;
+      P.forEach((p, i) => {
+        if (!p.pendR) return;
+        const Lo = lenOf(p); let tau = frac(p.th) * Lo - ov; if (tau < 0) tau += Lo;
+        p.r = p.pendR; p.pendR = null; p.since = nb;
+        const Ln = lenOf(p), th0 = Math.floor(p.th) + 2 + frac(tau / Ln);
+        this.sweep(p, i, th0 - 1e-7, th0 + ov / Ln, tbeat, t1);
+      });
+    }
+    if (this.pend.length) {
+      this.pend.sort((x, y) => x.tau - y.tau);
+      while (this.pend.length && this.pend[0].tau <= t1) { const e = this.pend.shift(); this.ev.push(e); this.sound(e.pitch, e.g, e.lane, e.tau); }
+    }
+    this.t = t1; this.B = B1;
+    if (this.cfg.model) P.forEach(p => {
+      const e = this.err(p, B1); if (p.home && Math.abs(e) < 1 / 256) p.home = false;
+      let d = e - (p.eLast ?? e); if (d > .5) d -= 1; if (d < -.5) d += 1;
+      p.eRate = (p.eRate ?? 0) * (1 - dt / .8) + d / .8; p.eLast = e;
+    });
+    P.forEach((p, i) => this.trace[i].push({ tau: t1, q: frac(p.th), a: this.amp(p, B1), m: p.amP ? this.mod(p, B1) : 0,
+      rq: this.cfg.model ? frac(this.ghost(p, B1)) : this.cfg.ref != null && i !== this.cfg.ref ? frac(P[this.cfg.ref].th) : null }));
+    const old = t1 - this.win - 1;
+    if (this.ev.length && this.ev[0].tau < old) this.ev = this.ev.filter(e => e.tau >= old);
+    if (this.grid.length && this.grid[0].tau < old) this.grid = this.grid.filter(g => g.tau >= old);
+    if (this.meets.length && this.meets[0] < old) this.meets = this.meets.filter(m => m >= old);
+    this.trace.forEach((tr, i) => { let k = 0; while (k < tr.length && tr[k].tau < old) k++; if (k) tr.splice(0, k); });
+  }
+  sweep(p, i, a, b, ta, tb) {
+    const span = b - a;
+    if (span > 0) {
+      for (let j = 0; j < p.fig.length; j++) {
+        const { q, pitch, wrapped } = this.pos(p, j);
+        for (let k = Math.floor(a - q) + 1; k + q <= b; k++) this.fire(p, i, j, ta + (k + q - a) / span * (tb - ta), k, q, pitch, wrapped);
+      }
+      for (let k = Math.floor(a) + 1; k <= b; k++) this.wrap(p, i, ta + (k - a) / span * (tb - ta));
+    }
+    p.th = b;
+  }
+  fire(p, i, j, tau, k, q, pitch, wrapped) {
+    const B = this.B0 + (tau - this.t0) * this.br, a = this.amp(p, B);
+    let g = a, kind = wrapped ? 'wrap' : 'note';
+    if (p.feel) {
+      if (Math.random() < Math.max(p.feel - .5, 0) * .3) kind = 'ghost';
+      tau += (Math.random() * 2 - 1) * p.feel * .03;
+      g *= p.swell * (1 - p.feel * .35 * Math.random());
+    }
+    p.hits[j] = tau;
+    this.ev.push({ tau, lane: i, q, a, g, kind, pitch });
+    if (kind === 'ghost') return;
+    this.sound(pitch, g, i, tau);
+    if (p.echo && p.echo.g > 0) for (let m = 1; m < 30; m++) {
+      const gg = g * Math.pow(p.echo.g, m); if (gg < .05) break;
+      this.pend.push({ tau: tau + m * p.echo.D * L0 * this.e, lane: i, q, a, g: gg, kind: 'echo', pitch });
+    }
+  }
+  wrap(p, i, tau) {
+    if (p.feel) p.swell += (1 - p.feel * .5 * Math.random() - p.swell) * .35;
+    p.lastWrap = tau;
+    if (p.pendLoop) { p.r = p.pendLoop; p.pendLoop = null; }
+    if (this.cfg.meet && this.P.every(o => Math.abs(o.lastWrap - tau) < .03) && tau - (this.meets[this.meets.length - 1] ?? -9) > .3) this.meets.push(tau);
+  }
+  sound(pitch, g, lane, tau) {
+    if (this.quiet || listener !== this) return;
+    const p = this.P[lane], m = p.amP ? this.mod(p, this.B0 + (tau - this.t0) * this.br) : 0;
+    const pan = p.amP && p.modT === 'pan' ? (m - .5) * 1.8 : p.pan, bright = p.amP && p.modT === 'brightness' ? m : .45;
+    ping(pitch, Math.min(1, g), pan, tau - this.t1, bright);
+  }
+  draw() {
+    const c = this.ctx, W = this.W, H = this.H, R = this.R, cx = this.cx, x0 = this.x0;
+    const pps = (W - x0 - 10) / this.win, X = tau => x0 + (this.t - tau) * pps;
+    c.clearRect(0, 0, W, H);
+    // L0 beats
+    c.lineWidth = 1; c.strokeStyle = C.line;
+    for (const g of this.grid) { const x = X(g.tau); if (x < x0 || x > W) continue; c.beginPath(); c.moveTo(x + .5, 4); c.lineTo(x + .5, H - 4); c.stroke(); }
+    // meets
+    c.strokeStyle = C.accent; c.fillStyle = C.accent; c.font = '600 17px ' + getComputedStyle(document.body).getPropertyValue('--f-pen');
+    for (const m of this.meets) { const x = X(m); if (x < x0 || x > W - 4) continue; c.lineWidth = 1.6; c.beginPath(); c.moveTo(x, 6); c.lineTo(x + .8, H - 6); c.stroke(); if (x < W - 40) c.fillText('meet', x + 4, H - 8); }
+    this.P.forEach((p, i) => {
+      const cy = this.top + i * this.lh + this.lh / 2, col = C[p.col], Y = (q, a) => cy - R * a * Math.cos(2 * Math.PI * q);
+      // shadow of the hand
+      const tr = this.trace[i];
+      c.strokeStyle = col; c.globalAlpha = .38; c.lineWidth = 1.4; c.beginPath();
+      let first = true;
+      for (let k = tr.length - 1; k >= 0; k--) { const x = X(tr[k].tau); if (x > W) break; const y = Y(tr[k].q, tr[k].a); if (first) { c.moveTo(x, y); first = false; } else c.lineTo(x, y); }
+      c.stroke(); c.globalAlpha = 1;
+      // where it would be in step, dashed: the source's shadow (ref) or the ghost's (model)
+      if (tr.length && tr[tr.length - 1].rq != null) {
+        c.strokeStyle = this.cfg.model ? C.ink2 : C[this.P[this.cfg.ref].col]; c.globalAlpha = .7; c.lineWidth = 1.2; c.setLineDash([3, 3]); c.beginPath(); let f3 = true, last = null;
+        for (let k = tr.length - 1; k >= 0; k--) { const x = X(tr[k].tau); if (x > W) break; const y = Y(tr[k].rq, tr[k].a); if (f3 || Math.abs(tr[k].rq - last) > .5) { c.moveTo(x, y); f3 = false; } else c.lineTo(x, y); last = tr[k].rq; }
+        c.stroke(); c.setLineDash([]); c.globalAlpha = 1;
+      }
+      if (p.amP && p.modT && p.modT !== 'level') { // the modulated knob, dashed
+        c.strokeStyle = C.ink2; c.globalAlpha = .7; c.lineWidth = 1.2; c.setLineDash([4, 3]); c.beginPath(); let f2 = true;
+        for (let k = tr.length - 1; k >= 0; k--) { const x = X(tr[k].tau); if (x > W) break; const y = cy + R - 2 * R * tr[k].m; if (f2) { c.moveTo(x, y); f2 = false; } else c.lineTo(x, y); }
+        c.stroke(); c.setLineDash([]); c.globalAlpha = 1;
+      }
+      // notes on the timeline
+      for (const e of this.ev) {
+        if (e.lane !== i) continue; const x = X(e.tau); if (x < x0 - 2 || x > W) continue; const y = Y(e.q, e.a);
+        const r = 2 + 2.6 * Math.min(1, e.g);
+        if (e.kind === 'ghost') { c.strokeStyle = C.ink2; c.lineWidth = 1.2; c.beginPath(); c.arc(x, y, 3.2, 0, 7); c.stroke(); }
+        else if (e.kind === 'echo') { c.strokeStyle = col; c.globalAlpha = Math.max(.25, Math.min(1, e.g)); c.lineWidth = 1.3; c.beginPath(); c.arc(x, y, r, 0, 7); c.stroke(); c.globalAlpha = 1; }
+        else { c.fillStyle = col; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); if (e.kind === 'wrap') { c.strokeStyle = C.accent; c.lineWidth = 1.6; c.beginPath(); c.arc(x, y, r + 2.4, 0, 7); c.stroke(); } }
+      }
+      // the circle
+      const aNow = this.amp(p, this.B);
+      c.strokeStyle = C.ink2; c.globalAlpha = .55; c.lineWidth = 1; c.beginPath(); c.arc(cx, cy, R, 0, 7); c.stroke(); c.globalAlpha = 1;
+      c.strokeStyle = C.ink; c.lineWidth = 1.5; c.beginPath(); c.moveTo(cx, cy - R - 4); c.lineTo(cx, cy - R + 3); c.stroke(); // phase 0
+      const reach = this.reach(p);
+      if (reach < 1) { const ang = 2 * Math.PI * reach; c.strokeStyle = C.accent; c.setLineDash([3, 3]); c.beginPath(); c.moveTo(cx, cy); c.lineTo(cx + (R + 5) * Math.sin(ang), cy - (R + 5) * Math.cos(ang)); c.stroke(); c.setLineDash([]); }
+      for (let j = 0; j < p.fig.length; j++) {
+        const { q, pitch, wrapped } = this.pos(p, j), ang = 2 * Math.PI * q, sx = Math.sin(ang), sy = -Math.cos(ang);
+        const dead = q >= reach - 1e-9;
+        const spoke = R * (.12 + .5 * Math.max(0, Math.min(1, (pitch - this.pmin) / (this.pmax - this.pmin))));
+        c.globalAlpha = dead ? .25 : .75; c.strokeStyle = col; c.lineWidth = 1.6;
+        c.beginPath(); c.moveTo(cx + sx * R, cy + sy * R); c.lineTo(cx + sx * (R - spoke), cy + sy * (R - spoke)); c.stroke();
+        const hot = this.t - (p.hits[j] ?? -9) < .18;
+        c.globalAlpha = dead ? .3 : 1; c.fillStyle = col; c.beginPath(); c.arc(cx + sx * R, cy + sy * R, hot ? 5.5 : 3.4, 0, 7); c.fill();
+        if (wrapped) { c.strokeStyle = C.accent; c.lineWidth = 1.5; c.beginPath(); c.arc(cx + sx * R, cy + sy * R, (hot ? 5.5 : 3.4) + 2.4, 0, 7); c.stroke(); }
+        c.globalAlpha = 1;
+      }
+      if (this.cfg.model) {
+        const g = 2 * Math.PI * frac(this.ghost(p, this.B)), e = this.err(p, this.B);
+        c.strokeStyle = C.ink2; c.lineWidth = 1.2; c.setLineDash([3, 3]); c.beginPath(); c.moveTo(cx, cy); c.lineTo(cx + R * Math.sin(g), cy - R * Math.cos(g)); c.stroke(); c.setLineDash([]);
+        if (Math.abs(e) > 1 / 200) { const a0 = g - Math.PI / 2, a1 = a0 - 2 * Math.PI * e; c.strokeStyle = C.accent; c.lineWidth = 2.5; c.beginPath(); c.arc(cx, cy, R + 4, Math.min(a0, a1), Math.max(a0, a1)); c.stroke(); }
+        if (i === this.chosen) { c.strokeStyle = C.ink; c.lineWidth = 2; c.beginPath(); c.arc(cx, cy, R + 8, 0, 7); c.stroke(); }
+      }
+      const h = 2 * Math.PI * frac(p.th), hx = cx + R * Math.sin(h), hy = cy - R * Math.cos(h), sy2 = Y(frac(p.th), aNow);
+      c.strokeStyle = C.ink; c.lineWidth = 1.6; c.beginPath(); c.moveTo(cx, cy); c.lineTo(hx, hy); c.stroke();
+      c.fillStyle = C.ink; c.beginPath(); c.arc(cx, cy, 2.2, 0, 7); c.fill();
+      c.strokeStyle = C.ink2; c.lineWidth = 1; c.setLineDash([2, 3]); c.beginPath(); c.moveTo(hx, hy); c.lineTo(x0, sy2); c.stroke(); c.setLineDash([]);
+      c.fillStyle = col; c.beginPath(); c.arc(x0, sy2, 3, 0, 7); c.fill();
+      // name
+      c.fillStyle = C.ink2; c.font = '500 10px ' + getComputedStyle(document.body).getPropertyValue('--f-data');
+      const label = p.name + (p.showRatio ? ' ×' + fr(p.pendLoop ? p.r : p.r) + (p.pendLoop ? ' → ×' + fr(p.pendLoop) : '') : '') + (this.cfg.model && Math.abs(p.det - 1) > 1e-6 ? ` · ${p.det > 1 ? '+' : '−'}${Math.abs((p.det - 1) * 100).toFixed(1)} %` : '') + (p.amP && p.modT && p.modT !== 'level' ? ' · ' + p.modT + ' every ' + p.amP + ' L0' : p.amP ? ' · level every ' + p.amP + ' L0' : '');
+      c.fillText(label, x0 + 10, cy - R - 1 < 10 ? 10 : cy - R + 2);
+    });
+  }
+  tick() { if (this.cfg.readout && (this.n++ % 8 === 0)) { const s = this.cfg.readout(this); if (s !== this.last) { this.out.textContent = s; this.last = s; } } }
+}
+
+function setListener(pl) {
+  if (listener) listener.listenBtn.setAttribute('aria-pressed', 'false'), listener.listenBtn.textContent = 'Listen';
+  listener = pl;
+  if (pl) { audio(); pl.listenBtn.setAttribute('aria-pressed', 'true'); pl.listenBtn.textContent = 'Listening'; if (!pl.playing) pl.playBtn.click(); }
+}
+
+// ---------- controls ----------
+function mkBtn(id, label, on) { const b = document.createElement('button'); b.type = 'button'; b.id = id; b.textContent = label; b.onclick = on; return b; }
+function ctl(label, ...kids) { const d = document.createElement('div'); d.className = 'ctl'; if (label) { const l = document.createElement('span'); l.className = 'ctl-l'; l.textContent = label; d.append(l); } d.append(...kids); return d; }
+function seg(id, items, cur, on) {
+  const g = document.createElement('div'); g.className = 'seg'; g.setAttribute('role', 'group');
+  items.forEach((it, k) => { const b = mkBtn(id + '-' + k, it.l, () => { g.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', 'false')); b.setAttribute('aria-pressed', 'true'); on(it.v); }); b.setAttribute('aria-pressed', String(it.v === cur)); g.append(b); });
+  return g;
+}
+function toggle(id, label, val, on) { const b = mkBtn(id, label, () => { val = !val; b.setAttribute('aria-pressed', String(val)); on(val); }); b.setAttribute('aria-pressed', String(val)); return b; }
+function slider(id, min, max, step, val, fmt, on) {
+  const s = document.createElement('input'); s.type = 'range'; s.id = id; s.min = min; s.max = max; s.step = step; s.value = val;
+  const o = document.createElement('output'); o.htmlFor = id; o.textContent = fmt(val);
+  s.oninput = () => { const v = +s.value; o.textContent = fmt(v); on(v); };
+  return [s, o];
+}
+const ratioItems = R10.map(r => ({ v: fr(r), l: '×' + fr(r), r }));
+const rOf = s => R10.find(r => fr(r) === s);
+
+// ---------- the plates ----------
+const fig = {
+  bronze: [[0, 62], [.25, 69], [.5, 67], [.625, 69]],
+  vibes: [[.125, 74], [.375, 81], [.75, 76]],
+  marimba54: [[0, 50], [.5, 57], [.75, 53], [1.0, 55]],
+};
+const deg = x => Math.round(x * 360);
+const cfgs = {
+  ensemble: { win: 14, meet: true, aria: 'Three players on circles: bronze and vibes at one L0, marimba at five quarters; their hands cast cosine shadows with the notes on them.',
+    players: [
+      { name: 'bronze', col: 'c1', fig: fig.bronze, pan: -.4 },
+      { name: 'vibes', col: 'c2', fig: fig.vibes, pan: .4 },
+      { name: 'marimba', col: 'c3', fig: fig.marimba54, r: [5, 4], pan: 0 }],
+    readout: pl => `L0 = ${L0} s · lengths ×1, ×1, ×5/4 · everyone meets every ${meetL0(pl.P.map(p => p.r))} L0 (${mmss(meetL0(pl.P.map(p => p.r)) * L0)})` },
+
+  period: { win: 14, meet: true,
+    players: [
+      { name: 'marimba', col: 'c3', fig: [[0, 57], [.5, 60], [.75, 62]], pan: -.3 },
+      { name: 'vibes', col: 'c2', fig: [[0, 69], [.25, 72], [.5, 74], [.75, 76], [1.0, 79]], r: [5, 4], pan: .3 }],
+    controls: (pl, bar) => bar.append(ctl('vibes length (lands on the next L0 beat)', seg('period-r', ratioItems, '5/4', v => { pl.P[1].pendR = rOf(v); }))),
+    readout: pl => { const m = meetL0(pl.P.map(p => p.r)); return `×1 and ×${fr(pl.P[1].r)} meet every ${m} L0 (${mmss(m * L0)})`; } },
+
+  window: { win: 12,
+    players: [
+      { name: 'marimba', col: 'c3', fig: [[0, 57], [.25, 62], [.5, 60], [.75, 64], [1.125, 62], [1.375, 67]], pan: -.2, showRatio: true },
+      { name: 'bronze', col: 'c1', fig: [[0, 45], [.5, 50]], pan: .2 }],
+    controls: (pl, bar) => {
+      bar.append(ctl('marimba length (lands on the next L0 beat)', seg('window-r', ratioItems, '1', v => { pl.P[0].pendR = rOf(v); })));
+      bar.append(ctl('ensemble length (tempo)', seg('window-e', [{ v: .5, l: '×1/2' }, { v: .75, l: '×3/4' }, { v: 1, l: '×1' }, { v: 1.5, l: '×3/2' }, { v: 2, l: '×2' }], 1, v => { pl.pendE = v; })));
+    },
+    readout: pl => { const p = pl.P[0], L = lenOf(p), w = p.fig.filter(n => n[0] >= L - 1e-9).length; return `figure kept at ×3/2, played at ×${fr(p.r)}: ${w ? w + ' of 6 notes folded back' : 'all 6 notes in place'}${L > 1.5 ? `, ${(L - 1.5).toFixed(2).replace(/0+$/, '').replace(/\.$/, '')} L0 of rest added` : ''} · tempo: L0 = ${(L0 * pl.e).toFixed(1)} s`; } },
+
+  phase: { win: 10, ref: 0,
+    players: [
+      { name: 'bronze', col: 'c1', fig: [[0, 62], [.125, 65], [.375, 69], [.5, 67]], pan: -.4 },
+      { name: 'its copy', col: 'c2', fig: [[0, 74], [.125, 77], [.375, 81], [.5, 79]], th: -.25, pan: .4 }],
+    controls: (pl, bar) => {
+      const s = pl.P[0], p = pl.P[1];
+      bar.append(ctl('kick the copy', mkBtn('phase-l', '◀ 1/64 earlier', () => { p.th += 1 / 64; }), mkBtn('phase-r', '1/64 later ▶', () => { p.th -= 1 / 64; }),
+        mkBtn('phase-4', '¼ later ▶', () => { p.th -= 1 / 4; }), mkBtn('phase-0', 'In step', () => { p.th = s.th; })));
+    },
+    readout: pl => { const m = ((Math.round((pl.P[0].th - pl.P[1].th) * 64) % 64) + 64) % 64; return m === 0 ? 'copy in step with its source (φ = 0)' : `copy kicked ${m}/64 of a turn later (${deg(m / 64)}°): its hand is behind, its notes come later`; } },
+
+  phasing: { win: 12,
+    players: [
+      { name: 'vibes', col: 'c2', fig: [[0, 69], [.125, 72], [.25, 76], [.5, 74]], pan: -.4 },
+      { name: 'its copy', col: 'c4', fig: [[0, 57], [.125, 60], [.25, 64], [.5, 62]], pan: .4 }],
+    controls: (pl, bar) => {
+      const p = pl.P[1];
+      bar.append(ctl('copy length (lands on the next L0 beat)', seg('phasing-r', ['1', '5/4', '4/3', '3/2', '2'].map(v => ({ v, l: '×' + v })), '1', v => { p.pendR = rOf(v); })));
+    },
+    readout: pl => {
+      const s0 = pl.P[0], p = pl.P[1], L = lenOf(p);
+      const off = d => { d = frac(d); if (d > .5) d -= 1; const n = Math.round(d * 64); return n === 0 ? 'in step' : `${Math.abs(n)}/64 ${n < 0 ? 'behind' : 'ahead'}`; };
+      if (p.pendR) return `×${fr(p.pendR)} waits for the next L0 beat…`;
+      if (L === 1) return 'copy at ×1: ' + off(frac(p.th) - frac(s0.th));
+      const d = Math.ceil(pl.B - 1e-9) - pl.B, tau = frac(p.th + d / L) * L;
+      return `copy at ×${fr(p.r)} for ${Math.max(0, Math.floor(pl.B - (p.since ?? 0)))} L0 · back to ×1 on the next beat would land ${off(frac(tau) - frac(s0.th + d))}`;
+    } },
+
+  feel: { win: 10,
+    players: [
+      { name: 'marimba, feel 0', col: 'c3', fig: [[0, 57], [.125, 60], [.25, 62], [.375, 64], [.5, 67], [.625, 64], [.75, 62], [.875, 60]], pan: -.4, showRatio: false },
+      { name: 'marimba, feel', col: 'c1', fig: [[0, 57], [.125, 60], [.25, 62], [.375, 64], [.5, 67], [.625, 64], [.75, 62], [.875, 60]], feel: .7, pan: .4, showRatio: false }],
+    controls: (pl, bar) => { const [s, o] = slider('feel-f', 0, 1, .05, .7, v => v.toFixed(2), v => { pl.P[1].feel = v; }); bar.append(ctl('feel', s, o)); },
+    readout: pl => { const f = pl.P[1].feel; return `feel ${f.toFixed(2)}: up to ±${Math.round(f * 30)} ms, softer by up to ${Math.round(f * 35)} %, ${Math.round(Math.max(f - .5, 0) * 30)} % of notes skipped`; } },
+
+  detune: { win: 16, meet: true, ref: 0,
+    players: [
+      { name: 'vibes', col: 'c2', fig: [[0, 69], [.25, 72], [.375, 74], [.625, 76]], pan: -.4 },
+      { name: 'its copy', col: 'c3', fig: [[0, 57], [.25, 60], [.375, 62], [.625, 64]], det: 1.02, pan: .4, showRatio: false }],
+    controls: (pl, bar) => {
+      const p = pl.P[1];
+      const [s, o] = slider('detune-d', -5, 5, .1, 2, v => (v > 0 ? '+' : '') + v.toFixed(1) + ' %', v => { p.det = 1 + v / 100; });
+      bar.append(ctl('detune the copy', s, o));
+    },
+    readout: pl => { const d = pl.P[1].det - 1, o = frac(pl.P[1].th - pl.P[0].th), n = Math.round((o > .5 ? o - 1 : o) * 64), now = n === 0 ? 'in step now' : `now ${Math.abs(n)}/64 ${n > 0 ? 'ahead' : 'behind'}`; if (Math.abs(d) < 1e-6) return `no detune: the copy stays where it is, ${now}`; return `${now} · copy ${d > 0 ? 'gains' : 'loses'} a 64th every ${(1 / (64 * Math.abs(d))).toFixed(2)} L0 · back in step after ${(1 / Math.abs(d)).toFixed(0)} L0 (${mmss(L0 / Math.abs(d))})`; } },
+
+  coupling: { win: 16, K: .25,
+    players: [
+      { name: 'bronze −3.5 %', col: 'c1', fig: [[0, 62], [.5, 69]], det: .965, th: .1, pan: -.6, showRatio: false },
+      { name: 'vibes −1 %', col: 'c2', fig: [[0, 74], [.5, 79]], det: .99, th: .55, pan: -.2, showRatio: false },
+      { name: 'marimba +1.5 %', col: 'c3', fig: [[0, 57], [.5, 64]], det: 1.015, th: .3, pan: .2, showRatio: false },
+      { name: 'kora +3.5 %', col: 'c4', fig: [[0, 66], [.5, 71]], det: 1.035, th: .8, pan: .6, showRatio: false }],
+    controls: (pl, bar) => {
+      const [s, o] = slider('coupling-k', 0, 1, .01, .25 / .7, v => v.toFixed(2), v => { pl.K = v * .7; });
+      bar.append(ctl('pull', s, o), mkBtn('coupling-s', 'Scatter', () => pl.P.forEach(p => { p.th = Math.floor(p.th) + Math.random(); })));
+    },
+    readout: pl => { let x = 0, y = 0; pl.P.forEach(p => { x += Math.cos(2 * Math.PI * p.th); y += Math.sin(2 * Math.PI * p.th); }); const r = Math.hypot(x, y) / pl.P.length; return `order r = ${r.toFixed(2)} · ${r > .97 ? 'locked: in step together' : r > .8 ? 'pulling together' : 'drifting'}`; } },
+
+  mirror: { win: 10,
+    players: [
+      { name: 'bronze', col: 'c1', fig: [[0, 60], [.125, 62], [.25, 64], [.5, 67], [.875, 72]], axis: 66, pan: -.4, showRatio: false },
+      { name: 'its copy', col: 'c2', fig: [[0, 60], [.125, 62], [.25, 64], [.5, 67], [.875, 72]], axis: 66, rev: true, pan: .4, showRatio: false }],
+    controls: (pl, bar) => {
+      const p = pl.P[1];
+      bar.append(ctl('the copy', toggle('mirror-r', 'Retrograde', true, v => { p.rev = v; }), toggle('mirror-i', 'Inversion', false, v => { p.inv = v; })));
+      bar.append(ctl('transpose', seg('mirror-t', [-5, -2, 0, 2, 7].map(v => ({ v, l: (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v) })), 0, v => { p.tr = v; })));
+    },
+    readout: pl => { const p = pl.P[1], parts = []; if (p.rev) parts.push('backwards'); if (p.inv) parts.push('upside down'); if (p.tr) parts.push((p.tr > 0 ? 'up ' : 'down ') + Math.abs(p.tr) + ' semitones'); return 'copy: ' + (parts.length ? parts.join(', ') : 'the same figure'); } },
+
+  am: { win: 26,
+    players: [
+      { name: 'bronze', col: 'c1', fig: [[0, 62], [.25, 69], [.625, 67]], amP: 3, amPh: 0, pan: -.5 },
+      { name: 'vibes', col: 'c2', fig: [[0, 74], [.5, 76], [1.0, 81]], r: [3, 2], amP: 5, amPh: .33, pan: .5 },
+      { name: 'marimba', col: 'c3', fig: [[0, 50], [.375, 57], [.75, 55]], r: [5, 4], amP: 7, amPh: .66, pan: 0 }],
+    controls: (pl, bar) => {
+      bar.append(ctl('periods', seg('am-p', [{ v: 0, l: 'Off' }, { v: 1, l: '3 · 5 · 7 L0' }, { v: 2, l: '5 · 7 · 11 L0' }], 1, v => {
+        const sets = [[0, 0, 0], [3, 5, 7], [5, 7, 11]]; pl.P.forEach((p, i) => { p.amP = sets[v][i]; });
+      })));
+      bar.append(ctl('on', seg('am-t', ['level', 'brightness', 'pan'].map(v => ({ v, l: v[0].toUpperCase() + v.slice(1) })), 'level', v => { pl.P.forEach(p => { p.modT = v; }); })));
+    },
+    readout: pl => { const rs = pl.P.map(p => p.r).concat(pl.P.filter(p => p.amP).map(p => [p.amP, 1])); const m = meetL0(rs); return `the whole ensemble repeats after ${m} L0 (${mmss(m * L0)})`; } },
+
+  model: { win: 16, model: true, pre: 40,
+    aria: 'Four players with their ghosts: hands pulled toward dashed ghost hands; detune, pull, kick and glide home.',
+    players: [
+      { name: 'bronze', col: 'c1', fig: [[0, 62], [.25, 69], [.5, 67], [.625, 69]], pan: -.5 },
+      { name: 'vibes', col: 'c2', fig: [[0, 74], [.25, 81], [.5, 79], [.625, 81]], det: 1.025, pan: .5 },
+      { name: 'marimba', col: 'c3', fig: [[0, 50], [.5, 57], [.75, 53], [1.0, 55]], r: [5, 4], pan: 0 },
+      { name: 'kora', col: 'c4', fig: [[0, 57], [.375, 64], [.75, 62]], det: .95, pan: -.2 }],
+    controls: (pl, bar) => {
+      pl.Kh = .04; pl.Km = 0; pl.wander = 0; pl.chosen = 0;
+      const P = pl.P, cur = () => P[pl.chosen], pct = v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(1) + ' %';
+      const [ds, dout] = slider('model-d', -5, 5, .1, 0, pct, v => { cur().det = 1 + v / 100; });
+      const syncDet = () => { const v = Math.round((cur().det - 1) * 1000) / 10; ds.value = v; dout.textContent = pct(v); };
+      const lenSeg = () => seg('model-r', ['1', '5/4', '4/3', '3/2', '2'].map(v => ({ v, l: '×' + v })), fr(cur().pendLoop || cur().r), v => { const r = rOf(v); if (fr(r) !== fr(cur().r)) cur().pendLoop = r; else cur().pendLoop = null; });
+      let lenBox = ctl('', lenSeg());
+      const pick = seg('model-p', P.map((p, i) => ({ v: i, l: p.name })), 0, v => { pl.chosen = v; syncDet(); const nb = ctl('', lenSeg()); lenBox.replaceWith(nb); lenBox = nb; });
+      const kick = d => { cur().th -= d / 64; };
+      const g = document.createElement('div'); g.className = 'ctl-g';
+      const row = (...k) => { const r = document.createElement('div'); r.className = 'row'; r.append(...k); return r; };
+      const gl = t => { const x = document.createElement('span'); x.className = 'gest'; x.textContent = t; return x; };
+      const [ks, kout] = slider('model-k', 0, 20, .5, 4, v => v.toFixed(1) + ' %', v => { pl.Kh = v / 100; });
+      const [ms, mout] = slider('model-m', 0, 20, .5, 0, v => v.toFixed(1) + ' %', v => { pl.Km = v / 100; });
+      const [ws, wout] = slider('model-w', 0, 1, .05, 0, v => v.toFixed(2), v => { pl.wander = v; });
+      g.append(
+        row(ctl('chosen player', pick)),
+        row(ctl('', gl('loop + wheel'), mkBtn('model-sl', '◀ kick', () => kick(-1)), mkBtn('model-sr', 'kick ▶', () => kick(1)), mkBtn('model-s8', 'kick ¼ ▶', () => kick(16))),
+            ctl('', gl('loop + push'), mkBtn('model-h', 'Glide home', () => { cur().home = true; }))),
+        row(ctl('', gl('play + wheel'), ctl('detune', ds, dout)), ctl('', gl('play + push'), mkBtn('model-x', 'Exact length', () => { cur().det = 1; syncDet(); }))),
+        row(ctl('', gl('CHOMPI + black key'), lenBox)),
+        row(ctl('', gl('all · loop + wheel'), ctl('pull', ks, kout)), ctl('', gl('all · loop + push'), mkBtn('model-ha', 'Everyone home', () => P.forEach(p => { p.home = true; })))),
+        row(ctl('listen to each other (not in yet)', ms, mout), ctl('wander (not in yet)', ws, wout)));
+      bar.append(g);
+      syncDet();
+    },
+    readout: pl => pl.P.map(p => {
+      const e = pl.err(p, pl.B), n = Math.round(-e * 64), off = n === 0 ? 'in step' : `${Math.abs(n)}/64 ${n < 0 ? 'behind' : 'ahead'}`;
+      if (p.home) return `${p.name} gliding home`;
+      if (Math.abs(p.eRate || 0) < .004) return `${p.name} ${n === 0 ? 'in step' : 'steady, ' + off}`;
+      return `${p.name} ${pl.Kh > 0 && Math.abs(p.det - 1) > pl.Kh ? 'slipping' : pl.Kh > 0 ? 'settling' : 'drifting'}, ${off}`;
+    }).join(' · ') },
+
+  feedback: { win: 10,
+    players: [{ name: 'marimba', col: 'c3', fig: [[0, 62], [.375, 69]], echo: { D: 3 / 4, g: .6 }, pan: 0 }],
+    controls: (pl, bar) => {
+      const p = pl.P[0];
+      bar.append(ctl('ensemble length (tempo)', seg('feedback-e', [{ v: .75, l: '×3/4' }, { v: 1, l: '×1' }, { v: 1.5, l: '×3/2' }], 1, v => { pl.pendE = v; })));
+      bar.append(ctl('delay', seg('feedback-d', ['1/3', '1/2', '2/3', '3/4', '5/4'].map(v => ({ v, l: v + ' L0' })), '3/4', v => { const r = rOf(v); p.echo.D = r[0] / r[1]; })));
+      const [s, o] = slider('feedback-g', 0, .85, .05, .6, v => v.toFixed(2), v => { p.echo.g = v; });
+      bar.append(ctl('feedback', s, o));
+    },
+    readout: pl => { const e = pl.P[0].echo; if (e.g <= 0) return 'no feedback: dry'; const n = Math.max(0, Math.floor(Math.log(.05) / Math.log(e.g))); return `an echo every ${e.D.toFixed(3).replace(/0+$/, '').replace(/\.$/, '')} L0 (${(e.D * L0 * pl.e).toFixed(2)} s at this tempo), each ${e.g.toFixed(2)}× as loud, about ${n} echo${n === 1 ? '' : 'es'} per note`; } },
+};
+
+readColors();
+const plates = [];
+document.querySelectorAll('[data-plate]').forEach(sec => { const cfg = cfgs[sec.dataset.plate]; if (cfg) plates.push(new Plate(sec, cfg)); });
+const io = new IntersectionObserver(es => es.forEach(e => { const pl = plates.find(p => p.sec === e.target); if (pl) pl.visible = e.isIntersecting; }), { rootMargin: '80px' });
+plates.forEach(p => io.observe(p.sec));
+plates.forEach(p => { p.draw(); p.tick(); });
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(.05, (now - last) / 1000); last = now;
+  readColors();
+  for (const p of plates) {
+    if (!p.visible) continue;
+    if (p.playing) { let r = dt; while (r > 1e-6) { const h = Math.min(r, 1 / 120); p.step(h); r -= h; } }
+    p.draw(); p.tick();
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+})();
+</script>
+
+
+</body>
+</html>
