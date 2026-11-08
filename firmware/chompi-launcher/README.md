@@ -1,7 +1,9 @@
 # CHOMPI Firmware Launcher
 
 Turn CHOMPI on and it lights one key for every firmware on the SD card. Press a
-key, that firmware starts. Power cycle to come back to the picker.
+key, that firmware starts. Power cycle to come back to the picker. More than 15
+firmwares go on further pages: hold the CHOMPI key and press the lowest two
+black keys to turn them, as TAPE turns its preset banks.
 
 Stock CHOMPI holds exactly one firmware, because the bootloader installs the
 first `.bin` it finds in the card root and then boots it forever. This replaces
@@ -113,11 +115,36 @@ shuffled them in and out of the root; that is gone.
 /WAVE/                 wavetables, options.json, presets.json
 ```
 
-The number in front of the name is the key: `05_TAPE-DEV.bin` is on key 5,
+The number in front of the name is the slot: `05_TAPE-DEV.bin` is on key 5,
 whatever else is on the card, and keys without a firmware stay dark. Files
-without a number fill the free keys in name order. Add a firmware by dropping
-a `.bin` in `/FIRMWARE`; up to 15 are shown, one per white key. Have it `f_chdir()` into its own folder and it
+without a number fill the free slots in name order. Add a firmware by dropping
+a `.bin` in `/FIRMWARE`. Have it `f_chdir()` into its own folder and it
 will never collide with anything else on the card.
+
+## Pages
+
+There are 15 white keys and up to 75 slots: five pages of 15, like TAPE's
+five preset banks. The slot number carries on from page to page, so
+`16_FRIZZ.bin` is page 2, key 1, and `47_SWEEP.bin` is page 4, key 2:
+
+| Page | Slots | Colour |
+|---|---|---|
+| 1 | 01 – 15 | purple |
+| 2 | 16 – 30 | orange |
+| 3 | 31 – 45 | teal |
+| 4 | 46 – 60 | dark orange |
+| 5 | 61 – 75 | yellow-green |
+
+Hold the **CHOMPI key** and press the lowest **C#** for the previous page or
+the lowest **D#** for the next (TAPE's JAMMI and CUBBI bank keys). Both wrap
+round, and pages with nothing on them are skipped. Holding the CHOMPI key
+lights those two keys in the page's colour; let go and they stay lit faintly,
+so you can always tell which page the white keys belong to. Then press a white
+key to start its firmware, holding the CHOMPI key or not.
+
+The picker opens on page 1, or on the first page with anything on it. A card
+with nothing past slot 15 never shows a page and looks just as it did before
+there were pages.
 
 `./make-card.sh /Volumes/YOUR_CARD` builds this layout from the factory card
 profiles in `firmware/card-profiles`. It only adds and overwrites, never
@@ -223,7 +250,8 @@ firmware's name, so the same firmware always looks the same.
 
 | Pattern | Meaning |
 |---|---|
-| Keys breathing in colour | Picker. One lit key per firmware found. |
+| Keys breathing in colour | Picker. One lit key per firmware on this page. |
+| Lowest two black keys lit | Which page is showing, in its colour; bright while the CHOMPI key is held. |
 | Chosen key flashes 3×, then stays lit | Selection acknowledged, loading. |
 | Keybed filling left to right | Read progress. Distinguishes a slow read from a dead unit. |
 | Slow **red** pulse | No card, or it would not mount. |
