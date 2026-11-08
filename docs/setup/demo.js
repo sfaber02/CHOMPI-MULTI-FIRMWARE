@@ -1,7 +1,8 @@
 /* Demo mode (?demo): a pretend CHOMPI in the browser, for trying the page without one.
    ?demo&old = a launcher too old for the page; ?demo&failslot=N = writing key N fails;
    &full = the card is full; &slowclear = CLEAR answers late (after the page resent it);
-   &lver=1.4.1 = the launcher's version (it can update itself); &noself = a launcher
+   &lver=1.4.1 = the launcher's version (it can update itself; 1.7.0 and up have 75
+   slots on pages of 15); &noself = a launcher
    that can't (1.4.0); &silent = CHOMPI is there but nothing answers (a firmware, or no launcher);
    &card={"01_TAPE.bin":240620,...} = what's on the card. */
 (() => {
@@ -20,6 +21,7 @@
   const NOSELF = P.has("noself");
   let lver = (P.get("lver") || (NOSELF ? "1.4.0" : "1.6.0")).split(".").map(Number);
   const hasColor = () => lver[0] * 1e6 + lver[1] * 1e3 + lver[2] >= 1006000;
+  const slots = () => (lver[0] * 1e6 + lver[1] * 1e3 + lver[2] >= 1007000 ? 75 : 15);
   /* key colours as the launcher keeps them: per file, else one from the name */
   const colors = window.__colors = {};
   function nameColor(f) {
@@ -29,12 +31,12 @@
     return [[255,up,0],[dn,255,0],[0,255,up],[0,dn,255],[up,0,255],[255,0,dn]][s];
   }
   function keys() {
-    const k = Array(15).fill(null);
+    const S = slots(), k = Array(S).fill(null);
     const bins = Object.keys(card).filter((f) => /\.bin$/i.test(f)).sort((a, b) => a.toLowerCase() < b.toLowerCase() ? -1 : 1);
     const rest = [];
     for (const f of bins) { const m = /^(\d\d)_/.exec(f); const n = m ? +m[1] : 0;
-      if (n >= 1 && n <= 15 && !k[n - 1]) k[n - 1] = f; else rest.push(f); }
-    let g = 0; for (const f of rest) { while (g < 15 && k[g]) g++; if (g < 15) k[g] = f; }
+      if (n >= 1 && n <= S && !k[n - 1]) k[n - 1] = f; else rest.push(f); }
+    let g = 0; for (const f of rest) { while (g < S && k[g]) g++; if (g < S) k[g] = f; }
     return k;
   }
   const g7 = (a) => a.reduceRight((v, b) => v * 128 + b, 0);
@@ -46,7 +48,7 @@
     send(m) {
       if (SILENT) return;
       const cmd = m[4], b = m.slice(5, -1);
-      if (cmd === 1) return reply(1, OLD ? [0,1,...p7(256,4),15] : [0,1,...p7(2048,4),15,NOSELF ? 7 : hasColor() ? 63 : (lver[2] >= 4 || lver[1] > 4 ? 31 : 15),...lver]);
+      if (cmd === 1) return reply(1, OLD ? [0,1,...p7(256,4),15] : [0,1,...p7(2048,4),slots(),NOSELF ? 7 : hasColor() ? 63 : (lver[2] >= 4 || lver[1] > 4 ? 31 : 15),...lver]);
       if (cmd === 2) { const n = b[5];
         if (b[4] === 127 && NOSELF) return reply(2,[8]); up = { size: g7(b.slice(0,4)), slot: b[4], name: String.fromCharCode(...b.slice(6,6+n)), got: 0 }; return reply(2,[0]); }
       if (cmd === 3) { const off = g7(b.slice(0,4)); const L = b.length - 4; const raw = L - Math.ceil(L/8); up.got = Math.max(up.got, off+raw); return reply(3,[0,...p7(up.got,4)]); }
@@ -70,7 +72,7 @@
       const legacy = NOSELF || lver[0] * 1e6 + lver[1] * 1e3 + lver[2] < 1004003; /* LIST/CLEAR at 05/06 */
       const LIST = legacy ? 5 : 6, CLEAR = legacy ? 6 : 7;
       if (cmd === 5 && !legacy) { /* RUN: the firmware starts, the launcher is gone */
-        if (b[0] < 1 || b[0] > 15 || !keys()[b[0]-1]) return reply(5,[8]);
+        if (b[0] < 1 || b[0] > slots() || !keys()[b[0]-1]) return reply(5,[8]);
         reply(5,[0]);
         const plug = (on) => { input.state = output.state = on ? "connected" : "disconnected"; access.onstatechange && access.onstatechange({}); };
         return setTimeout(() => plug(false), 300);

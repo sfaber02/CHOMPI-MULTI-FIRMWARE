@@ -11,7 +11,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Bungee+Shade&family=Space+Grotesk:wght@400;500;700&family=Space+Mono:wght@400;700&family=Caveat:wght@700&display=swap" rel="stylesheet">
 <!-- ?v= names this version of the scripts, so a browser never pairs this page
      with an older copy it kept. Change it whenever demo.js or chompi-midi.js change. -->
-<script src="demo.js?v=2026-10-15"></script>
+<script src="demo.js?v=2026-11-08"></script>
 <style>
   /* Setup page: crumb-strewn paper, a CHOMPI creature that eats firmware, handwritten notes,
      steps printed like the lines on CHOMPI's panel (see the end of this block). */
@@ -166,6 +166,35 @@
   @media (prefers-reduced-motion: no-preference) {
     .key[data-busy="store"]::before, .key[data-busy="send"]::before { animation: write 0.9s ease-in-out infinite alternate; }
     @keyframes write { to { opacity: .35; } }
+  }
+
+  /* Pages of keys (launcher 1.7): small black keys, like the two CHOMPI turns
+     pages with, each with its page's LED colour. */
+  .pages { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 14px; }
+  .pages[hidden] { display: none; }
+  .pg {
+    display: inline-flex; align-items: center; gap: 8px;
+    appearance: none; margin: 0; padding: 6px 12px 6px 10px;
+    border: 2.5px solid var(--outline); border-radius: 10px;
+    background: #1B1238; color: #FFF1DC; box-shadow: 0 3px 0 var(--outline);
+    font: 700 .8rem/1 var(--mono); cursor: pointer;
+    transition: translate .08s, box-shadow .08s;
+  }
+  .pg::before {
+    content: ""; flex: none; width: 10px; height: 10px; border-radius: 50%;
+    border: 2px solid #FFF1DC; background: var(--pc); opacity: .4;
+  }
+  .pg .count { color: #9CFFCF; font-weight: 400; }
+  .pg.changed .count::after { content: "*"; }
+  .pg:disabled { cursor: default; }
+  .pg:not(:disabled):hover { translate: 0 -2px; box-shadow: 0 5px 0 var(--outline); }
+  .pg[aria-pressed="true"] { translate: 0 -3px; box-shadow: 0 6px 0 var(--outline); }
+  .pg[aria-pressed="true"]::before { opacity: 1; box-shadow: 0 0 8px 2px var(--pc); }
+  @media (max-width: 560px) {
+    /* one row of five: the number and its LED; the count is in the label */
+    .pages { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+    .pg { justify-content: center; gap: 6px; padding: 6px 4px; }
+    .pg .word, .pg .count { display: none; }
   }
 
   /* ---- steps: tilted coloured cards ------------------------------------------ */
@@ -675,10 +704,12 @@
       <h2><span class="num">2</span>Choose firmwares</h2>
       <div class="inner">
         <p>Each white key on CHOMPI can hold one firmware. Tap a key, then choose what goes on it. Or tap <b>Put on key</b> on a firmware below. With launcher 1.6 or newer, CHOMPI's keys light up in the colours you see here.</p>
+        <p class="hint" id="pages-hint" hidden></p>
         <section class="chompi" aria-label="CHOMPI keybed">
           <div class="screen" id="screen" data-mood="idle" role="status" aria-live="polite">
             <span class="dot" aria-hidden="true"></span><span id="screen-text">Not connected yet.</span>
           </div>
+          <div class="pages" id="pages" role="group" aria-label="Pages of keys" hidden></div>
           <div class="keys" id="keys"></div>
         </section>
         <div class="tools">
@@ -742,7 +773,11 @@ const NO_LAUNCHER = "Still no answer. If its keys never start breathing after sw
 const CHUNK = Math.max(0, parseInt(new URLSearchParams(location.search).get("chunk"), 10) || 0);
 const chunkSize = () => (CHUNK ? Math.min(CHUNK, state.info.maxChunk) : state.info.maxChunk);
 const NEEDED = FEATURE.LIST | FEATURE.CLEAR | FEATURE.STAY;
-const SLOTS = 15;
+/* One page of keys: CHOMPI's 15 white keys. Launchers from 1.7 have pages
+   of them (PING's slot count, 75 = five pages); slot 16 is page 2, key 1. */
+const PAGE = 15;
+/* Each page's colour on CHOMPI's page keys: TAPE's bank colours, A to E. */
+const PAGE_COLORS = ["#940DFF", "#FF993D", "#24FFEB", "#C4610F", "#B4FF00"];
 const CATALOG_FAILED = "Couldn't load the list of firmwares. Check your internet connection and reload the page.";
 /* One colour per firmware, for its key's LED; launchers from 1.6 show it on
    CHOMPI too. The list gives each firmware its own; one without gets a spare
@@ -757,6 +792,8 @@ const state = {
   catalog: [], byId: {},
   newLauncher: null,     // catalog.json's launcher: { version, file, size, sha256 }
   launcherUpdate: null,  // { to } while CHOMPI restarts into a new launcher
+  slots: PAGE,   // how many the launcher has: 15, or 75 on pages (1.7)
+  page: 0,       // the page of keys showing, 0 = keys 1-15
   current: [],   // per key (index 0 = key 1): { file, size, id } or null before reading
   plan: [],      // per key: "empty", "keep", or a catalogue id
   selected: 0,
@@ -766,6 +803,19 @@ const state = {
 const pad2 = (n) => String(n).padStart(2, "0");
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const cap = (s) => s[0].toUpperCase() + s.slice(1);
+/** Whether the page knows what is on every key. */
+const isKnown = () => state.current.length > 0 && state.current.length === state.slots;
+const pageCount = () => Math.ceil(state.slots / PAGE);
+const pageOf = (n) => Math.floor((n - 1) / PAGE);
+/** Key n (from 1) in words: "key 5", or with pages "page 2 key 1". */
+const keyName = (n) => (pageCount() > 1 ? `page ${pageOf(n) + 1} key ${(n - 1) % PAGE + 1}` : `key ${n}`);
+/** Several keys in words: "keys 1, 3 and 5". */
+function keysText(ns) {
+  const names = pageCount() > 1 ? ns.map(keyName) : ns.map(String);
+  const list = names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names.at(-1)}` : names[0];
+  return pageCount() > 1 ? list : `key${ns.length > 1 ? "s" : ""} ${list}`;
+}
 
 /* ---- log --------------------------------------------------------------- */
 const logLines = [];
@@ -891,12 +941,12 @@ async function syncColors() {
 const keys = [];
 function buildKeys() {
   $("keys").replaceChildren();
-  for (let i = 1; i <= SLOTS; i++) {
+  for (let i = 1; i <= PAGE; i++) {
     const k = document.createElement("button");
     k.className = "key";
     k.type = "button";
     k.innerHTML = `<span class="n">${i}</span>`;
-    k.addEventListener("click", () => select(i));
+    k.addEventListener("click", () => select(state.page * PAGE + i));
     $("keys").append(k);
     keys.push(k);
   }
@@ -906,16 +956,17 @@ function buildKeys() {
 const rows = [];
 function buildRows() {
   $("slots").replaceChildren();
-  for (let i = 1; i <= SLOTS; i++) {
+  for (let i = 1; i <= PAGE; i++) {
     const li = document.createElement("li");
     li.innerHTML = `<span class="kn">${i}</span>
       <span class="what"><b></b><span class="sub"></span></span>
       <select aria-label="Firmware for key ${i}"></select>
       <span class="state" aria-live="polite"></span>`;
-    li.addEventListener("click", (e) => { if (e.target.tagName !== "SELECT") select(i); });
+    const slot = () => state.page * PAGE + i;
+    li.addEventListener("click", (e) => { if (e.target.tagName !== "SELECT") select(slot()); });
     const sel = li.querySelector("select");
-    sel.addEventListener("focus", () => select(i, false));
-    sel.addEventListener("change", () => { state.plan[i - 1] = sel.value; render(); });
+    sel.addEventListener("focus", () => select(slot(), false));
+    sel.addEventListener("change", () => { state.plan[slot() - 1] = sel.value; render(); });
     $("slots").append(li);
     rows.push(li);
   }
@@ -944,17 +995,60 @@ function fillOptions(sel, i) {
 function select(n, scroll = true) {
   if (state.busy) return;
   state.selected = n;
+  state.page = pageOf(n);
   render();
-  if (scroll) rows[n - 1].scrollIntoView({ block: "nearest", behavior: "smooth" });
+  if (scroll) rows[(n - 1) % PAGE].scrollIntoView({ block: "nearest", behavior: "smooth" });
+}
+
+/* ---- pages (launcher 1.7) ---------------------------------------------- */
+function showPage(p) {
+  if (state.busy || p === state.page) return;
+  state.page = p;
+  if (state.selected && pageOf(state.selected) !== p) state.selected = 0;
+  render();
+}
+function renderPages() {
+  const n = pageCount(), bar = $("pages");
+  bar.hidden = n < 2;
+  $("pages-hint").hidden = n < 2;
+  if (n < 2) return;
+  $("pages-hint").textContent = `This CHOMPI has ${n} pages of ${PAGE} keys. Choose a page above the keys to see its keys. On CHOMPI, hold the CHOMPI key and press the lowest C# or D# to turn the page. Empty pages are skipped there.`;
+  if (bar.children.length !== n) {
+    bar.replaceChildren(...Array.from({ length: n }, (_, p) => {
+      const b = document.createElement("button");
+      b.className = "pg";
+      b.type = "button";
+      b.style.setProperty("--pc", PAGE_COLORS[p % PAGE_COLORS.length]);
+      b.innerHTML = `<span><span class="word">Page </span>${p + 1}</span><span class="count"></span>`;
+      b.addEventListener("click", () => showPage(p));
+      return b;
+    }));
+  }
+  [...bar.children].forEach((b, p) => {
+    const on = [], ch = [];
+    for (let i = p * PAGE; i < Math.min((p + 1) * PAGE, state.slots); i++) {
+      if (isKnown() && state.plan[i] !== "empty") on.push(i);
+      if (isKnown() && changed(i)) ch.push(i);
+    }
+    b.querySelector(".count").textContent = isKnown() ? String(on.length) : "";
+    b.classList.toggle("changed", ch.length > 0);
+    b.setAttribute("aria-pressed", String(p === state.page));
+    b.setAttribute("aria-label", `Page ${p + 1}` + (isKnown() ? `: ${on.length} firmware${on.length === 1 ? "" : "s"}` : ""));
+    b.disabled = state.busy;
+  });
 }
 
 /* ---- render everything from state ------------------------------------- */
 function render() {
-  const known = state.current.length === SLOTS;
+  const known = isKnown();
   paintConnection();
+  if (state.page >= pageCount()) state.page = 0;
+  renderPages();
 
-  for (let i = 0; i < SLOTS; i++) {
-    const k = keys[i], li = rows[i];
+  for (let j = 0; j < PAGE; j++) {
+    const i = state.page * PAGE + j, k = keys[j], li = rows[j];
+    k.hidden = li.hidden = i >= state.slots;
+    if (i >= state.slots) continue;
     const color = known ? planColor(i) : null;
     if (color) { k.dataset.led = ""; k.style.setProperty("--led", color); }
     else { delete k.dataset.led; k.style.removeProperty("--led"); }
@@ -962,12 +1056,13 @@ function render() {
     if (pr) k.dataset.busy = pr.phase; else delete k.dataset.busy;
     k.classList.toggle("changed", known && changed(i));
     k.setAttribute("aria-pressed", String(state.selected === i + 1));
-    k.setAttribute("aria-label", known ? `Key ${i + 1}: ${planLabel(i)}` : `Key ${i + 1}`);
+    k.setAttribute("aria-label", known ? `${cap(keyName(i + 1))}: ${planLabel(i)}` : cap(keyName(i + 1)));
     k.disabled = state.busy;
 
     li.classList.toggle("selected", state.selected === i + 1);
     li.classList.toggle("changed", known && changed(i));
     const sel = li.querySelector("select");
+    sel.setAttribute("aria-label", `Firmware for ${keyName(i + 1)}`);
     const b = li.querySelector(".what b"), sub = li.querySelector(".what .sub");
     if (!known) {
       b.textContent = "—";
@@ -1038,8 +1133,12 @@ function buildCatalog() {
 /** The key "Put on key" means: the selected one, else the first empty one. */
 function targetKey() {
   if (state.selected) return state.selected;
-  const i = state.plan.findIndex((p) => p === "empty");
-  return i < 0 ? 0 : i + 1;
+  /* the first empty one on the page showing, then on the pages after it */
+  for (let j = 0; j < state.slots; j++) {
+    const i = (state.page * PAGE + j) % state.slots;
+    if (state.plan[i] === "empty") return i + 1;
+  }
+  return 0;
 }
 
 function put(id) {
@@ -1047,26 +1146,27 @@ function put(id) {
   if (!n) return;
   state.plan[n - 1] = id;
   state.selected = 0; // next "Put on key" goes to the next free one
+  state.page = pageOf(n);
   render();
 }
 
 function renderCatalogState() {
-  const known = state.current.length === SLOTS;
+  const known = isKnown();
   const n = known ? targetKey() : 0;
   for (const el of $("catalog").children) {
     const id = el.dataset.id;
     const btn = el.querySelector(".put");
-    btn.textContent = n ? `Put on key ${n}` : known ? "Choose a key first" : "Put on key";
+    btn.textContent = n ? `Put on ${keyName(n)}` : known ? "Choose a key first" : "Put on key";
     btn.disabled = !known || !n || state.busy;
     const on = known ? state.plan.map((p, i) => (p === id ? i + 1 : 0)).filter(Boolean) : [];
-    el.querySelector(".on").textContent = on.length ? `On key ${on.join(", ")}` : "";
+    el.querySelector(".on").textContent = !on.length ? "" : pageCount() > 1 ? `On ${keysText(on)}` : `On key ${on.join(", ")}`;
   }
 }
 
 /* ---- what will happen -------------------------------------------------- */
 function plannedOps() {
   const ops = [];
-  for (let i = 0; i < SLOTS; i++) {
+  for (let i = 0; i < state.slots; i++) {
     if (!changed(i)) continue;
     const c = state.current[i], p = state.plan[i];
     /* A file without a number has no key of its own: replaced, it would only
@@ -1079,7 +1179,7 @@ function plannedOps() {
 }
 
 function renderSummary() {
-  const known = state.current.length === SLOTS;
+  const known = isKnown();
   const ops = known ? plannedOps() : [];
   const list = $("changes");
   const planned = (id) => state.plan.some((p, i) => p === id || (p === "keep" && state.current[i]?.prev?.id === id));
@@ -1088,8 +1188,8 @@ function renderSummary() {
     const c = state.current[op.key - 1];
     const was = describeCurrent(op.key - 1);
     li.textContent = op.kind === "clear"
-      ? `Key ${op.key}: remove ${was}`
-      : `Key ${op.key}: ${op.fw.title} ${op.fw.version}` + (was === "empty" ? "" : ` (replaces ${was})`);
+      ? `${cap(keyName(op.key))}: remove ${was}`
+      : `${cap(keyName(op.key))}: ${op.fw.title} ${op.fw.version}` + (was === "empty" ? "" : ` (replaces ${was})`);
     const warn = [];
     if (unknownFile(c))
       warn.push(`${c.file} isn't in the firmware list. Once it's gone, you need your own copy of it to put it back.`);
@@ -1110,7 +1210,7 @@ function renderSummary() {
     const onKeys = {};
     state.plan.forEach((p, i) => { if (state.byId[p]) (onKeys[p] ||= []).push(i + 1); });
     for (const [id, ks] of Object.entries(onKeys))
-      if (ks.length > 1) notes.push(`${state.byId[id].title} is on keys ${ks.slice(0, -1).join(", ")} and ${ks.at(-1)}. That works, but one key would do.`);
+      if (ks.length > 1) notes.push(`${state.byId[id].title} is on ${keysText(ks)}. That works, but one key would do.`);
     const byFolder = {};
     state.plan.forEach((p, i) => {
       const id = state.byId[p] ? p : p === "keep" ? state.current[i]?.prev?.id : null;
@@ -1268,8 +1368,8 @@ async function readCard(talk = true) {
      offer to remove TAPE as a stranger. */
   if (!state.catalog.length) throw new ProtocolError(CATALOG_FAILED);
   const current = [];
-  for (let n = 1; n <= SLOTS; n++) {
-    if (talk) screen(`Looking at key ${n} of ${SLOTS}…`, "busy");
+  for (let n = 1; n <= state.slots; n++) {
+    if (talk) screen(pageCount() > 1 ? `Looking at page ${pageOf(n) + 1} of ${pageCount()}…` : `Looking at key ${n} of ${state.slots}…`, "busy");
     const { file, size, color } = await state.launcher.list(n);
     current.push({ file, size, color, ...(file ? identify(file, size) : {}) });
   }
@@ -1299,8 +1399,12 @@ async function connectTo(pair, quiet = false) {
       screen("This launcher is too old for this page. See step 1.", "bad");
       return true; // a launcher did answer: stop trying
     }
-    const before = state.current.length === SLOTS ? state.plan.slice() : null;
+    /* 15 keys, or pages of them from launcher 1.7. A plan for a launcher
+       with a different number (one just updated) doesn't carry over. */
+    const slots = Math.max(PAGE, Math.min(info.slots || PAGE, 126));
+    const before = state.current.length === slots ? state.plan.slice() : null;
     const hadChanges = before && state.plan.some((_, i) => changed(i));
+    state.slots = slots;
     state.current = await readCard();
     /* keep what the user planned across a reconnect */
     state.plan = hadChanges ? before : state.current.map((_, i) => initialPlan(i));
@@ -1487,6 +1591,7 @@ $("run-key-start").addEventListener("click", async () => {
   const out = $("run-result");
   if (state.busy || !state.info) { out.textContent = "Connect CHOMPI first."; return; }
   if (!(state.info.features & FEATURE.RUN)) { out.textContent = "This launcher can't start keys from here (needs 1.5)."; return; }
+  $("run-key").max = state.slots;
   const key = parseInt($("run-key").value, 10);
   try {
     await openPorts();
@@ -1559,7 +1664,7 @@ $("write").addEventListener("click", async () => {
       const step = `${i + 1} of ${ordered.length}`;
       failed = op;
       if (op.kind === "clear") {
-        screen(`${step}: emptying key ${op.key}…`, "busy");
+        screen(`${step}: emptying ${keyName(op.key)}…`, "busy");
         progress(op.key, "store", "emptying…");
         /* named, so a resend can't take a file that moved onto the key */
         await state.launcher.clear(op.key, state.current[op.key - 1].file);
@@ -1569,7 +1674,7 @@ $("write").addEventListener("click", async () => {
         const t = await state.launcher.upload(img, op.key, op.fw.card, chunkSize(), (phase, done, total) => {
           if (phase === "send") {
             const pct = Math.floor((100 * done) / total);
-            screen(`${step}: ${op.fw.title} to key ${op.key}… ${pct}%`, "busy");
+            screen(`${step}: ${op.fw.title} to ${keyName(op.key)}… ${pct}%`, "busy");
             progress(op.key, "send", `sending ${pct}%`);
           } else {
             screen(`${step}: writing ${op.fw.title} to the card…`, "busy");
@@ -1598,9 +1703,9 @@ $("write").addEventListener("click", async () => {
       const nowOn = (f) => state.current.some((c) => c.file === f);
       const moved = off.flatMap((n) => {
         const c = state.current[n - 1], was = before[n - 1];
-        if (loose(c.file)) return [wasOn(c.file) ? `${c.file} moved from key ${wasOn(c.file)} to key ${n}` : `${c.file} is now on key ${n}`];
+        if (loose(c.file)) return [wasOn(c.file) ? `${c.file} moved from ${keyName(wasOn(c.file))} to ${keyName(n)}` : `${c.file} is now on ${keyName(n)}`];
         if (loose(was.file) && nowOn(was.file)) return []; // the key it left
-        return [`key ${n} looks different`];
+        return [`${keyName(n)} looks different`];
       });
       screen("Written, but the card looks a little different from the plan.", "bad");
       show("write-result", `Written. But ${moved.join(", ")}: firmwares without a number in front of their file name take the first free key. Check the list above and write again if you like.`, true);
