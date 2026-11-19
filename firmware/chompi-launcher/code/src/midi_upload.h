@@ -24,6 +24,16 @@
  *                                                    size:u28
  *      07 CLEAR  slot [name_len name]         -> 47 status slot removed
  *      08 COLOR  slot r g b                   -> 48 status slot
+ *      09 FILE   total:u28 flags path_len path -> 49 status
+ *      0A STAT   path_len path                -> 4A status kind size:u28
+ *                                                    path_len path
+ *
+ *  FILE starts an upload like BEGIN, but of a data file for a firmware's own
+ *  folder, e.g. PHYMO/BANK1/P01.txt: DATA and END as usual, and END writes it
+ *  there instead of storing a firmware (FEATURE_FILES). STAT tells whether
+ *  such a file is on the card already. A file already there is only replaced
+ *  if FILE's flags have kFileReplace; otherwise END answers EXISTS and the
+ *  card stays as it was (a player's own presets are safe from any host).
  *
  *  LIST appends the key's colour, r g b, after the size (FEATURE_COLOR).
  *
@@ -45,10 +55,10 @@
 /** The launcher's own version. Also in the image as kLauncherTag, which is
  *  how a launcher recognises another one sent to it for self-update. */
 #ifndef CHOMPI_LAUNCHER_VERSION_PATCH
-#define CHOMPI_LAUNCHER_VERSION_PATCH 0
+#define CHOMPI_LAUNCHER_VERSION_PATCH 2
 #endif
 #define CHOMPI_LAUNCHER_VERSION_MAJOR 1
-#define CHOMPI_LAUNCHER_VERSION_MINOR 7
+#define CHOMPI_LAUNCHER_VERSION_MINOR 8
 #define CHOMPI_LAUNCHER_TAG_PREFIX "CHOMPI-LAUNCHER "
 #include "chainload.h"
 #include <cstring>
@@ -71,6 +81,11 @@ namespace chompi
         static constexpr size_t   kMaxName  = 16;  /**< chars in a slot name */
         /** Most chars of a card filename LIST reports. */
         static constexpr size_t kMaxListName = 40;
+        /** Most chars of a FILE or STAT path, and of each folder or file name
+         *  in it, and how many of those a path may have. */
+        static constexpr size_t kMaxPath     = 96;
+        static constexpr size_t kMaxPathPart = 32;
+        static constexpr int    kMaxPathParts = 4;
 
         /** What this launcher can do beyond protocol 1's upload, as the last
          *  byte of the PING reply. Older launchers send no such byte. */
@@ -82,12 +97,16 @@ namespace chompi
             FEATURE_LAUNCHER = 1 << 3, /**< slot 127: update the launcher */
             FEATURE_RUN   = 1 << 4, /**< 05 RUN */
             FEATURE_COLOR = 1 << 5, /**< 08 COLOR, and LIST tells the colour */
+            FEATURE_FILES = 1 << 6, /**< 09 FILE and 0A STAT */
         };
         static constexpr uint8_t kFeatures = FEATURE_LIST | FEATURE_CLEAR | FEATURE_STAY
-                                           | FEATURE_LAUNCHER | FEATURE_RUN | FEATURE_COLOR;
+                                           | FEATURE_LAUNCHER | FEATURE_RUN | FEATURE_COLOR
+                                           | FEATURE_FILES;
 
         /** END's optional flags byte. */
         static constexpr uint8_t kEndStay = 1 << 0;
+        /** FILE's flags byte: a file already on the card may be replaced. */
+        static constexpr uint8_t kFileReplace = 1 << 0;
 
         enum Cmd : uint8_t
         {
@@ -99,6 +118,8 @@ namespace chompi
             LIST  = 0x06,
             CLEAR = 0x07,
             COLOR = 0x08,
+            FILE  = 0x09,
+            STAT  = 0x0A,
             REPLY = 0x40, /**< or'd into the command being answered */
         };
 
@@ -121,6 +142,10 @@ namespace chompi
             NOT_LAUNCHER = 13, /**< slot 127, but the image is no launcher */
             OTHER_BIN    = 14, /**< another .bin in the card root would be
                                     installed instead of the new launcher */
+            BAD_PATH     = 15, /**< FILE or STAT path breaks the path rules, or
+                                    names a folder where a file should go */
+            EXISTS       = 16, /**< FILE without kFileReplace, and the file
+                                    is on the card already (left as it was) */
         };
 
         /** What Poll() saw, for the caller's LEDs and log. */
@@ -136,6 +161,7 @@ namespace chompi
             Clear,    /**< CLEAR awaits FinishClear() */
             Run,      /**< RUN for RunSlot(); awaits FinishRun() */
             Color,    /**< COLOR for Slot(); awaits FinishColor() */
+            Stat,     /**< STAT for StatPath(); awaits FinishStat() */
         };
 
         /** Start USB MIDI and begin listening.
@@ -256,6 +282,25 @@ namespace chompi
             Reply(CLEAR, p, sizeof(p));
         }
 
+        /** Answer STAT: kind 0 nothing there, 1 a file of `size` bytes, 2 a
+         *  folder, followed by the path asked about, so a host can tell a
+         *  late reply from the one it waits for. */
+        void FinishStat(Status s, uint8_t kind, uint32_t size)
+        {
+            if (s != OK)
+            {
+                ReplyStatus(STAT, s);
+                return;
+            }
+            uint8_t      p[2 + 4 + 1 + kMaxPath] = {s, kind};
+            const size_t n                       = strlen(stat_path_);
+            Put7(p + 2, size, 4);
+            p[6] = (uint8_t)n;
+            memcpy(p + 7, stat_path_, n);
+            last_status_ = s;
+            Reply(STAT, p, 7 + n);
+        }
+
         /** The END asked to store only: the launcher stays in the picker. */
         bool Stay() const { return end_flags_ & kEndStay; }
 
@@ -271,7 +316,12 @@ namespace chompi
         uint8_t     RunSlot() const { return run_slot_; }
         const char *Name() const { return name_; }
         /** The upload is a new launcher, not a firmware for a key. */
-        bool        ForLauncher() const { return slot_ == kLauncherSlot; }
+        bool        ForLauncher() const { return !file_ && slot_ == kLauncherSlot; }
+        /** The upload is a data file for FilePath(), not a firmware. */
+        bool        ForFile() const { return file_; }
+        const char *FilePath() const { return file_path_; }
+        bool        FileMayReplace() const { return file_replace_; }
+        const char *StatPath() const { return stat_path_; }
         Status      LastStatus() const { return last_status_; }
 
       private:
@@ -393,6 +443,44 @@ namespace chompi
             return ~crc;
         }
 
+        /** A FILE or STAT path: a folder and a file in it, or deeper, e.g.
+         *  PHYMO/BANK1/P01.txt. Between 2 and kMaxPathParts names separated by
+         *  '/', each 1 - kMaxPathPart of A-Z a-z 0-9 - _ . and not starting
+         *  with '.' (so no "..", no hidden files). Nothing in the card root,
+         *  where the bootloader looks for .bin files, and nothing in
+         *  FIRMWARE, which is the launcher's own. Copies it to `out`. */
+        static bool PathValid(const uint8_t *p, size_t len, char *out)
+        {
+            if (len < 3 || len > kMaxPath)
+                return false;
+            int    parts = 0;
+            size_t start = 0;
+            for (size_t i = 0; i <= len; i++)
+            {
+                if (i < len && p[i] != '/')
+                {
+                    const uint8_t c = p[i];
+                    if (!((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')
+                          || (c >= '0' && c <= '9') || c == '-' || c == '_'
+                          || c == '.'))
+                        return false;
+                    continue;
+                }
+                const size_t n = i - start;
+                if (n < 1 || n > kMaxPathPart || p[start] == '.')
+                    return false;
+                if (parts == 0 && n == 8 && strncasecmp((const char *)p, "FIRMWARE", 8) == 0)
+                    return false;
+                parts++;
+                start = i + 1;
+            }
+            if (parts < 2 || parts > kMaxPathParts)
+                return false;
+            memcpy(out, p, len);
+            out[len] = '\0';
+            return true;
+        }
+
         /** 1-16 of A-Z 0-9 - _. It becomes part of a filename on the card,
          *  so nothing that FAT or a path could take another way. */
         static bool NameValid(const uint8_t *p, size_t len)
@@ -411,7 +499,7 @@ namespace chompi
 
         void Reply(uint8_t cmd, const uint8_t *payload, size_t len)
         {
-            uint8_t out[64] = {0xF0, 0x7D, 0x43, 0x48, (uint8_t)(cmd | REPLY)};
+            uint8_t out[128] = {0xF0, 0x7D, 0x43, 0x48, (uint8_t)(cmd | REPLY)};
             size_t  n       = kHeaderLen;
             for (size_t i = 0; i < len && n < sizeof(out) - 1; i++)
                 out[n++] = payload[i];
@@ -466,6 +554,7 @@ namespace chompi
                     total_    = 0;
                     received_ = 0;
                     stored_   = false;
+                    file_     = false;
 
                     if (blen < 6 || blen != 6u + body[5])
                         return Fail(cmd, BAD_MESSAGE);
@@ -530,7 +619,7 @@ namespace chompi
                     crc_ = Get7(body, 5);
                     if (Crc32(image_, total_) != crc_)
                         return Fail(cmd, BAD_CRC);
-                    if (!ImageLooksValid(image_, total_))
+                    if (!file_ && !ImageLooksValid(image_, total_))
                         return Fail(cmd, BAD_IMAGE);
                     if (ForLauncher() && !HasLauncherTag(image_, total_))
                         return Fail(cmd, NOT_LAUNCHER);
@@ -579,6 +668,41 @@ namespace chompi
                     return Event::Color;
                 }
 
+                case FILE:
+                {
+                    /* An upload like BEGIN's, of a data file: total flags
+                       path_len path. It replaces any upload in progress the
+                       same way. */
+                    total_    = 0;
+                    received_ = 0;
+                    stored_   = false;
+                    file_     = false;
+
+                    if (blen < 6 || blen != 6u + body[5] || (body[4] & ~kFileReplace))
+                        return Fail(cmd, BAD_MESSAGE);
+                    const uint32_t total = Get7(body, 4);
+                    if (total < 1 || total > capacity_)
+                        return Fail(cmd, TOO_BIG);
+                    if (!PathValid(body + 6, body[5], file_path_))
+                        return Fail(cmd, BAD_PATH);
+
+                    file_  = true;
+                    file_replace_ = (body[4] & kFileReplace) != 0;
+                    slot_  = 0;
+                    total_ = total;
+                    ReplyStatus(cmd, OK);
+                    return Event::Started;
+                }
+
+                case STAT:
+                {
+                    if (blen < 1 || blen != 1u + body[0])
+                        return Fail(cmd, BAD_MESSAGE);
+                    if (!PathValid(body + 1, body[0], stat_path_))
+                        return Fail(cmd, BAD_PATH);
+                    return Event::Stat;
+                }
+
                 case RUN:
                 {
                     if (blen != 1)
@@ -589,6 +713,7 @@ namespace chompi
                        an upload had put there. */
                     total_    = 0;
                     received_ = 0;
+                    file_     = false;
                     run_slot_ = body[0];
                     /* No reply yet: the caller knows whether the slot holds
                        a firmware. FinishRun(). */
@@ -613,6 +738,10 @@ namespace chompi
         uint8_t  color_[3]    = {};
         uint8_t  end_flags_   = 0;
         bool     stored_      = false; /**< END answered OK */
+        bool     file_        = false; /**< the upload is a FILE, not a BEGIN */
+        bool     file_replace_ = false; /**< ... and may replace a file already there */
+        char     file_path_[kMaxPath + 1] = {};
+        char     stat_path_[kMaxPath + 1] = {};
         bool     clear_name_given_ = false;
         size_t   clear_name_len_   = 0;
         uint8_t  clear_name_[kMaxListName] = {};

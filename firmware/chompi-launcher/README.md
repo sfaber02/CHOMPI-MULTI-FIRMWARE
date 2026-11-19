@@ -210,6 +210,13 @@ and the page writes them all. Over the same connection a host can
   the bootloader installs it, exactly as after copying it onto the card by
   hand. A file that isn't a launcher, or another `.bin` at the top of the
   card that the bootloader would take instead, is refused.
+- (v1.8) put a firmware's own files on the card, presets for example
+  (`09 FILE`), and ask whether one is there already (`0A STAT`). A file
+  goes into a folder, never the card root or `/FIRMWARE`, and one that is
+  already there is left alone unless the host asks to replace it, so
+  presets a player saved over are safe. The setup page sends only the
+  files listed with a firmware, into that firmware's folder, and never asks
+  to replace.
 
 Uploads go in 2048-byte messages (256 before v1.5), about 240 KB/s. A full
 card is reported as such, and a failed write leaves nothing behind.
@@ -222,6 +229,11 @@ specified in [PROTOCOL.md](PROTOCOL.md), for anyone writing another client.
 USB only appears once the launcher has taken the data lines back from the
 MP2722 charger, which TAPE does as well: they are switched between the two, and
 the charger borrows them to identify the port.
+
+From v1.8.2 the charger only gets the lines within 3 s of a cable coming in,
+which is when it identifies the port. Before, any charger interrupt that
+found the port type unknown lent the lines out again, and USB MIDI could
+drop out while connected. CIRCLES has had the same rule since its USB fix.
 
 ## Building
 
