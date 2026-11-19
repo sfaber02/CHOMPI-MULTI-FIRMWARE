@@ -853,6 +853,71 @@ static MidiUpload::Status StoreUpload(Slot *out)
     return MidiUpload::OK;
 }
 
+/** Write the uploaded data file to its path, e.g. PHYMO/BANK1/P01.txt,
+ *  making the folders on the way and replacing a file already there.
+ *
+ *  MidiUpload has checked the path: never the card root, never FIRMWARE, no
+ *  "..". Like a firmware it goes to kTemp first and is read back, so a failed
+ *  write leaves the old file alone; then it is renamed into place. */
+static MidiUpload::Status StoreFile()
+{
+    const char *path = upload.FilePath();
+    if (!EnsureCard())
+        return MidiUpload::NO_CARD;
+
+    /* A folder where the file should go would be removed below if empty. A
+     * file already there stays, unless the host said it may be replaced. */
+    FILINFO info;
+    const FRESULT there = f_stat(path, &info);
+    if (there == FR_OK && (info.fattrib & AM_DIR))
+    {
+        Log("file: %s is a folder", path);
+        return MidiUpload::BAD_PATH;
+    }
+    if (there == FR_OK && !upload.FileMayReplace())
+    {
+        Log("file: %s is there, not replaced", path);
+        return MidiUpload::EXISTS;
+    }
+
+    const MidiUpload::Status st = WriteTemp();
+    if (st != MidiUpload::OK)
+        return st;
+
+    /* Each folder on the way: PHYMO, then PHYMO/BANK1. */
+    char dir[MidiUpload::kMaxPath + 1];
+    for (const char *p = strchr(path, '/'); p; p = strchr(p + 1, '/'))
+    {
+        const size_t n = (size_t)(p - path);
+        memcpy(dir, path, n);
+        dir[n]            = '\0';
+        const FRESULT res = f_mkdir(dir);
+        if (res != FR_OK && res != FR_EXIST)
+        {
+            Log("file: f_mkdir(\"%s\") -> %d", dir, (int)res);
+            f_unlink(kTemp);
+            return MidiUpload::WRITE_FAILED;
+        }
+    }
+
+    FRESULT res = f_unlink(path);
+    if (res != FR_OK && res != FR_NO_FILE)
+    {
+        Log("file: f_unlink(\"%s\") -> %d", path, (int)res);
+        f_unlink(kTemp);
+        return MidiUpload::WRITE_FAILED;
+    }
+    res = f_rename(kTemp, path);
+    Log("file: %lu bytes -> \"%s\": %d", (unsigned long)upload.Total(), path,
+        (int)res);
+    if (res != FR_OK)
+    {
+        f_unlink(kTemp);
+        return MidiUpload::WRITE_FAILED;
+    }
+    return MidiUpload::OK;
+}
+
 /** A .bin in the card root other than CHOMPI.bin, as the bootloader sees
  *  them: it installs the first one it meets, so with one of these around a
  *  new CHOMPI.bin might never be installed. Fills `name` if found. */
@@ -1205,6 +1270,13 @@ static uint32_t usb_lent_t     = 0;
 static uint32_t usb_quiet_t    = 0;     /**< ignore "unknown" until then */
 static uint32_t usb_log_t      = 0;     /**< last USB event, for LogFlush */
 static bool     usb_log_dirty  = false;
+/** When a cable last came (power on it, after none): only then are the lines
+ *  lent. The charger also interrupts for charging and for the traffic on the
+ *  lines; lent out then, the CHOMPI is gone from the host for up to 1.5 s,
+ *  mid-upload. (As CIRCLES-63.) */
+static bool     prev_vin       = false;
+static uint32_t cable_t        = 0;
+static constexpr uint32_t kNewCableMs = 3000;
 
 /** Read every charger register, waiting for the I2C transfer to land.
  *  TAPE waits forever; a failed read never sets read_ready, so this gives
@@ -1233,6 +1305,8 @@ static void UsbTakeOver()
 {
     hw.MpWrite(0x0c, 0B01010001); /* BATT_LOW at 3V, as TAPE does */
     const bool read = ChargerRead();
+    if (read)
+        prev_vin = (hw.mp_buff_[1] >> 6) & 1;
     System::Delay(100);           /* TAPE spends ~100 ms here */
 
     hw.usb_sw.Write(false);       /* give USB to the charger */
@@ -1263,7 +1337,16 @@ static void ServiceUsbSwitch(uint32_t now)
 
     if (interrupt)
     {
-        if (!ChargerRead())
+        const bool read = ChargerRead();
+        if (read)
+        {
+            /* Power on the cable now, and not before: a cable has come. */
+            const bool vin = (hw.mp_buff_[1] >> 6) & 1;
+            if (vin && !prev_vin)
+                cable_t = now | 1;
+            prev_vin = vin;
+        }
+        if (!read)
         {
             /* Deciding on stale registers could lend the lines out for good.
                Leave everything as it is and look again on the next pass. */
@@ -1281,6 +1364,10 @@ static void ServiceUsbSwitch(uint32_t now)
         else if ((hw.mp_buff_[0] & 0B11110000) == 0 && (int32_t)(now - usb_quiet_t) < 0)
         {
             /* Still settling from the last round; leave the lines with us. */
+        }
+        else if ((hw.mp_buff_[0] & 0B11110000) == 0 && !(cable_t && now - cable_t < kNewCableMs))
+        {
+            /* No cable has just come: the lines stay with us. */
         }
         else if ((hw.mp_buff_[0] & 0B11110000) == 0) /* DPDM_STAT unknown */
         {
@@ -1352,6 +1439,21 @@ static void ServiceUsb(uint32_t now)
 
         case MidiUpload::Event::Complete:
         {
+            if (upload.ForFile())
+            {
+                /* A firmware's data file: written, and the launcher stays
+                   where it was, whatever END's flags said. */
+                const MidiUpload::Status st = StoreFile();
+                upload.FinishEnd(st);
+                if (st != MidiUpload::OK)
+                {
+                    Log("usb: file not stored, status %d", (int)st);
+                    LogFlush();
+                }
+                picker_wanted = true; /* a fault showing may be over now */
+                break;
+            }
+
             Log("usb: upload complete, %lu bytes, crc 0x%08lX ok, for slot %u "
                 "as \"%s\"", (unsigned long)upload.Total(),
                 (unsigned long)upload.Crc(), (unsigned)upload.Slot(),
@@ -1470,6 +1572,29 @@ static void ServiceUsb(uint32_t now)
             Log("usb: clear key %d -> %s", s + 1, ok ? "ok" : "failed");
             picker_wanted = true;
             upload.FinishClear(ok ? MidiUpload::OK : MidiUpload::WRITE_FAILED, ok);
+            break;
+        }
+
+        case MidiUpload::Event::Stat:
+        {
+            if (!EnsureCard())
+            {
+                upload.FinishStat(MidiUpload::NO_CARD, 0, 0);
+                break;
+            }
+            FILINFO       info;
+            const FRESULT res = f_stat(upload.StatPath(), &info);
+            if (res == FR_NO_FILE || res == FR_NO_PATH)
+                upload.FinishStat(MidiUpload::OK, 0, 0);
+            else if (res != FR_OK)
+            {
+                Log("usb: stat \"%s\" -> %d", upload.StatPath(), (int)res);
+                upload.FinishStat(MidiUpload::NO_CARD, 0, 0);
+            }
+            else if (info.fattrib & AM_DIR)
+                upload.FinishStat(MidiUpload::OK, 2, 0);
+            else
+                upload.FinishStat(MidiUpload::OK, 1, (uint32_t)info.fsize);
             break;
         }
 

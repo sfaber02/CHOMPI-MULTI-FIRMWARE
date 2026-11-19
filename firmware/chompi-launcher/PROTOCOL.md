@@ -2,8 +2,8 @@
 
 **Protocol version 1.** Launcher v1.1 brought PING, BEGIN, DATA and END;
 v1.5 adds the features below (LIST, CLEAR, STAY, the launcher's own update)
-and RUN, v1.6 key colours (COLOR). Additions keep version 1: clients find
-them in PING's features byte.
+and RUN, v1.6 key colours (COLOR), v1.8 a firmware's own files (FILE,
+STAT). Additions keep version 1: clients find them in PING's features byte.
 
 This describes how a host program sends a firmware image to the CHOMPI
 launcher over USB MIDI and stores it in a slot on the SD card. It is meant
@@ -222,6 +222,7 @@ commands below with `BAD_MESSAGE`, and END with a flags byte the same way.
 | 3 | `LAUNCHER` | BEGIN to slot 127 updates the launcher itself |
 | 4 | `RUN` | `05 RUN` is there (launchers with RUN but no features byte have it too) |
 | 5 | `COLOR` | `08 COLOR` is there, and LIST replies end with the key's colour |
+| 6 | `FILES` | `09 FILE` and `0A STAT` are there |
 
 The test launchers 1.4.0 – 1.4.2 had LIST and CLEAR at `05` and
 `06`; a client that wants to talk to them can tell them apart by
@@ -321,6 +322,68 @@ so a firmware keeps that colour on any key. `0 0 0` goes back to it.
 Fails with `BAD_SLOT` if the key is empty, `NO_CARD`, or `WRITE_FAILED`; the
 reply is then the status only. Send COLOR after the firmware is on the key.
 
+### `FILES`: a firmware's own files
+
+Some firmwares come with files for their folder on the card, presets for
+example. FILE puts one there; STAT tells whether it is there already.
+
+#### `09` FILE
+
+| Field | Type | Meaning |
+|---|---|---|
+| total | `u28` | the file's size in bytes, 1 – the upload buffer |
+| flags | `u7` | bit 0 `REPLACE`: a file already at `path` may be replaced. Other bits must be 0 |
+| path_len | `u7` | |
+| path | path_len × `u7` | where it goes, e.g. `PHYMO/BANK1/P01.txt` |
+
+Reply `49`: status (`u7`). Then DATA and END exactly as for a firmware.
+END writes the file to `path` instead of storing a firmware, makes the
+folders on the way, and the launcher stays where it is (no STAY needed).
+FILE replaces any upload in progress, as BEGIN does.
+
+A file already at `path` is left as it is unless FILE had `REPLACE`: END
+answers `EXISTS` and writes nothing. So a player's own presets are safe
+from any client that does not ask for it. A client that only adds what is
+missing leaves `REPLACE` off.
+
+The file goes to `/FIRMWARE/upload.tmp` first and is read back; only then
+is it renamed to `path` (a file replaced is removed just before). A failed
+write leaves the old file as it was.
+
+Path rules, checked by FILE and STAT (`BAD_PATH` otherwise):
+
+- 2 – 4 names separated by `/`: a folder and a file in it, or deeper. Never
+  a file in the card root.
+- each name 1 – 32 of `A-Z a-z 0-9 - _ .`, not starting with `.` (so no
+  `..`); the whole path 3 – 96 characters.
+- not under `FIRMWARE`, any case.
+- a folder where a file should go is refused too.
+
+The launcher does not know which folder belongs to which firmware: keeping
+a firmware's files in its own folder is up to the client (the setup page
+offers only files under the firmware's `folder` in its catalogue).
+
+#### `0A` STAT
+
+| Field | Type | Meaning |
+|---|---|---|
+| path_len | `u7` | |
+| path | path_len × `u7` | as for FILE |
+
+Reply `4A`:
+
+| Field | Type | Meaning |
+|---|---|---|
+| status | `u7` | |
+| kind | `u7` | 0 nothing there, 1 a file, 2 a folder |
+| size | `u28` | the file's size; 0 for nothing or a folder |
+| path_len | `u7` | |
+| path | path_len × `u7` | the path asked about |
+
+The path comes back so a client can tell a late reply to an earlier STAT
+from the one it waits for. On `BAD_PATH` or `NO_CARD` the reply is the
+status only.
+
 ### `LAUNCHER`: updating the launcher
 
 BEGIN with slot **127** (out of the range of keys; slot 0 is reserved) sends
@@ -413,6 +476,8 @@ already started; no reply therefore most likely means it did.
 | 12 | `CARD_FULL` | no room on the card for the image |
 | 13 | `NOT_LAUNCHER` | slot 127, but the image has no launcher tag |
 | 14 | `OTHER_BIN` | slot 127, but another `.bin` in the card root would be installed instead |
+| 15 | `BAD_PATH` | FILE or STAT path breaks the path rules, or names a folder where a file should go |
+| 16 | `EXISTS` | FILE without `REPLACE`, and a file is at `path` already (left as it was) |
 
 Clients should show unknown codes as a number rather than fail, since later
 versions may add more.
@@ -494,7 +559,7 @@ samples.
 |---|---|
 | reply to PING, BEGIN, DATA | expect within 300 ms. Resend after that, up to ~10 tries |
 | reply to END | allow 10 s (it writes and verifies ~250 KB on the card) |
-| reply to LIST, CLEAR | allow 2 s (they may have to mount the card first) |
+| reply to LIST, CLEAR, STAT | allow 2 s (they may have to mount the card first) |
 | reply to RUN | expect within 300 ms. Resend once at most; no reply most likely means it started |
 | gaps between messages | keep below 3 s, or the launcher may treat the upload as abandoned |
 
